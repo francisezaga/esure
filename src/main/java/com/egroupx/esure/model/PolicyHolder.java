@@ -11,7 +11,7 @@ import lombok.NoArgsConstructor;
 public class PolicyHolder {
 
     private Long id;
-    @JsonAlias("private-or-org")
+    @JsonAlias({"isPrivate","private-or-org"})
     private String isPrivate;
     private Person person;
     private PoliceHolderShortTerm shortTerm;

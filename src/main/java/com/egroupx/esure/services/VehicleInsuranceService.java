@@ -55,8 +55,8 @@ public class VehicleInsuranceService {
                         LOG.info("Retrieved vehicle list by year");
                        return ResponseEntity.ok().body(new APIResponse(200, "success",vehicleManufacturers, Instant.now()));
                 }).onErrorResume(error -> {
-                    LOG.info(MessageFormat.format("Failed to retrieve vehicle list {0}", error.getMessage()));
-                    return Mono.just(ResponseEntity.internalServerError().body(new APIResponse(500, "Failed", "Failed to retrieve vehicle list", Instant.now())));
+                    LOG.info(MessageFormat.format("Failed to retrieve vehicle manufacturer list {0}", error.getMessage()));
+                    return Mono.just(ResponseEntity.internalServerError().body(new APIResponse(500, "Failed", "Failed to retrieve vehicle manufacturers", Instant.now())));
                 });
     }
 
@@ -71,8 +71,8 @@ public class VehicleInsuranceService {
                     LOG.info("Retrieved vehicle list by year and manufacturer code");
                     return ResponseEntity.ok().body(new APIResponse(200, "success",vehicleManufacturers, Instant.now()));
                 }).onErrorResume(error -> {
-                    LOG.info(MessageFormat.format("Failed to retrieve vehicle list by year and manufacturer code {0}", error.getMessage()));
-                    return Mono.just(ResponseEntity.internalServerError().body(new APIResponse(500, "Failed", "Failed to retrieve vehicle list by year and manufacturer code", Instant.now())));
+                    LOG.info(MessageFormat.format("Failed to retrieve vehicle model list by year and manufacturer code {0}", error.getMessage()));
+                    return Mono.just(ResponseEntity.internalServerError().body(new APIResponse(500, "Failed", "Failed to retrieve vehicle models", Instant.now())));
                 });
     }
 }
