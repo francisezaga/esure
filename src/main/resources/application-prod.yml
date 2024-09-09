@@ -1,0 +1,64 @@
+spring:
+  application:
+    name: esure
+    version: 1.0.0
+    description: ESure APIs
+    jwt:
+      jwtSecret: 2D4A614E645267556B58703273357638792F423F4428472B4B6250655368566D
+      jwtExpirationMs: 86400000
+      jwtCookie: QPXYPUQZRE
+
+  datasource:
+    url: jdbc:mariadb://102.131.62.24:3306/ezaga_dev?allowPublicKeyRetrieval=true&useSSL=false
+    username: uat_lite
+    password: 7mwDpesIYvCcpdwH
+    driver-class-name: org.mariadb.jdbc.Driver
+
+  r2dbc:
+    url: r2dbc:mariadb://102.131.62.24:3306/ezaga_dev?allowPublicKeyRetrieval=true&useSSL=false
+    username: uat_lite
+    password: 7mwDpesIYvCcpdwH
+
+  jpa:
+    database-platform: org.hibernate.dialect.MySQL5InnoDBDialect
+    hibernate:
+      ddl-auto: create
+
+  main:
+    allow-bean-definition-overriding: true
+
+  data:
+    r2dbc:
+      repositories:
+        enabled: true
+    jdbc:
+      repositories:
+        enabled: false
+
+server:
+  address: 0.0.0.0
+  port: 8055
+
+logging:
+  level:
+    org:
+      springframework:
+        data:
+          r2dbc: DEBUG
+
+
+ezaga:
+
+management:
+  endpoints:
+    metrics:
+      enabled: true
+    web:
+      exposure:
+        include: "*"
+
+springdoc:
+  api-docs:
+    path: /v3/api-docs
+  swagger-ui:
+    path: swagger-ui/index.html

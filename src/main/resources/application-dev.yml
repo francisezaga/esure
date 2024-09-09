@@ -1,0 +1,67 @@
+spring:
+  application:
+    name: esure
+    version: 1.0.0
+    description: ESure APIS
+    jwt:
+      jwtSecret: 2D4A614E645267556B58703273357638792F423F4428472B4B6250655368566D
+      jwtExpirationMs: 86400000
+      jwtCookie: QPXYPUQZRE
+
+  datasource:
+    url: jdbc:mariadb://localhost:3306/ezaga_dev?allowPublicKeyRetrieval=true&useSSL=false
+    username: root
+    password: masterpwd@2024
+    driver-class-name: org.mariadb.jdbc.Driver
+
+  r2dbc:
+    url: r2dbc:mariadb://localhost:3306/ezaga_dev?allowPublicKeyRetrieval=true&useSSL=false
+    username: root
+    password: masterpwd@2024
+
+  jpa:
+    database-platform: org.hibernate.dialect.MySQL5InnoDBDialect
+    hibernate:
+      ddl-auto: create
+
+  main:
+    allow-bean-definition-overriding: true
+
+  data:
+    r2dbc:
+      repositories:
+        enabled: true
+    jdbc:
+      repositories:
+        enabled: false
+
+server:
+  address: 0.0.0.0
+  port: 8065
+
+logging:
+  level:
+    org:
+      springframework:
+        data:
+          r2dbc: DEBUG
+
+
+egroupx:
+  services:
+    fspEndpointUrl: https://test.fspsolutions.com
+    fspAPIKey: 1Am}@vdV0mJV[J4vL=k?!e+H~3=].NP2
+
+management:
+  endpoints:
+    metrics:
+      enabled: true
+    web:
+      exposure:
+        include: "*"
+
+springdoc:
+  api-docs:
+    path: /v3/api-docs
+  swagger-ui:
+    path: swagger-ui/index.html

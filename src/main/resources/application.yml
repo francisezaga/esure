@@ -1,0 +1,14 @@
+spring:
+  application:
+    name: esure
+
+  profiles:
+    active: dev
+    logging:
+      level:
+        org.springframework.security.web: DEBUG
+        root: DEBUG
+
+
+
+
