@@ -1,6 +1,7 @@
 package com.egroupx.esure.model;
 
 import com.fasterxml.jackson.annotation.JsonAlias;
+import com.fasterxml.jackson.annotation.JsonProperty;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
@@ -10,10 +11,13 @@ import lombok.NoArgsConstructor;
 @AllArgsConstructor
 public class AllRisks {
 
-    @JsonAlias({"itemDescription","item-description"})
+    @JsonAlias("itemDescription")
+    @JsonProperty("item-description")
     private String itemDescription;
-    @JsonAlias({"sumInsured","sum.insured"})
+    @JsonAlias("sumInsured")
+    @JsonProperty("sum.insured")
     private String sumInsured;
-    @JsonAlias({"coverTypeId","cover.type.id"})
+    @JsonAlias("coverTypeId")
+    @JsonProperty("cover.type.id")
     private String coverTypeId;
 }

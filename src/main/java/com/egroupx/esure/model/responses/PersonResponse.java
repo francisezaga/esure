@@ -1,5 +1,7 @@
 package com.egroupx.esure.model.responses;
 
+import com.fasterxml.jackson.annotation.JsonAlias;
+import com.fasterxml.jackson.annotation.JsonProperty;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
@@ -10,14 +12,22 @@ import java.util.Date;
 @NoArgsConstructor
 @AllArgsConstructor
 public class PersonResponse {
-    private String name;
+    @JsonProperty("full-names")
     private String fullNames;
+    private String surname;
     private String initials;
+    @JsonProperty("identification-no")
     private String idNumber;
+    @JsonProperty("title-cd")
     private String titleCd;
+    @JsonProperty("gender-cd")
     private String genderCd;
+    @JsonProperty("birth-date")
+    private String birthDate;
+    @JsonProperty("marital-status-cd")
     private String maritalStatusCd;
+    @JsonProperty("id-type")
     private String idType;
-    private Date birthDate;
+    @JsonProperty("passport-number")
     private String passportNumber;
 }

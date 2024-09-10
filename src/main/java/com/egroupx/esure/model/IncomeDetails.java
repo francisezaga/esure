@@ -1,6 +1,7 @@
 package com.egroupx.esure.model;
 
 import com.fasterxml.jackson.annotation.JsonAlias;
+import com.fasterxml.jackson.annotation.JsonProperty;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
@@ -10,6 +11,7 @@ import lombok.NoArgsConstructor;
 @AllArgsConstructor
 public class IncomeDetails {
 
-    @JsonAlias({"occupationCategory","occupation-category"})
+    @JsonAlias("occupationCategory")
+    @JsonProperty("occupation-category")
     private String occupationCategory;
 }

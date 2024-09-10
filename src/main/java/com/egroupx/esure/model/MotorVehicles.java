@@ -1,6 +1,7 @@
 package com.egroupx.esure.model;
 
 import com.fasterxml.jackson.annotation.JsonAlias;
+import com.fasterxml.jackson.annotation.JsonProperty;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
@@ -12,20 +13,28 @@ public class MotorVehicles {
     private String year;
     private String make;
     private String model;
-    @JsonAlias({"carColour","car-colour"})
+    @JsonAlias("carColour")
+    @JsonProperty("car-colour")
     private String carColour;
-    @JsonAlias({"metallicPaint","metalic-paint"})
+    @JsonAlias("metallicPaint")
+    @JsonProperty("metalic-paint")
     private String metallicPaint;
-    @JsonAlias({"quotationBasis","quotation-basis"})
+    @JsonAlias("quotationBasis")
+    @JsonProperty("quotation-basis")
     private String quotationBasis;
-    @JsonAlias({"alarmTypeId","alarm-type-id"})
+    @JsonAlias("alarmTypeId")
+    @JsonProperty("alarm-type-id")
     private String alarmTypeId;
-    @JsonAlias({"alarmByVesa","alarm-by-vesa"})
+    @JsonAlias("alarmByVesa")
+    @JsonProperty("alarm-by-vesa")
     private String alarmByVesa;
-    @JsonAlias({"tracingDevice","tracing-device"})
+    @JsonAlias("tracingDevice")
+    @JsonProperty("tracing-device")
     private String tracingDevice;
-    @JsonAlias({"motorVechicleShortTerm","short-term"})
+    @JsonAlias("shortTerm")
+    @JsonProperty("short-term")
     private MotorVechicleShortTerm motorVechicleShortTerm;
-    @JsonAlias({"shLinks","sh-link"})
+    @JsonAlias("shLinks")
+    @JsonProperty("sh-link")
     private ShLink[] shLinks;
 }

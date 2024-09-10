@@ -1,6 +1,5 @@
 package com.egroupx.esure.model.responses;
 
-import com.fasterxml.jackson.annotation.JsonProperty;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
@@ -8,9 +7,7 @@ import lombok.NoArgsConstructor;
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
-public class ShLinkResponse {
+public class CalculationsResponse {
 
-    private Long id;
-    @JsonProperty("link-type-id")
-    private String linkTypeId;
+    private CalculationsLinks _links;
 }

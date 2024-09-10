@@ -1,6 +1,7 @@
 package com.egroupx.esure.model;
 
 import com.fasterxml.jackson.annotation.JsonAlias;
+import com.fasterxml.jackson.annotation.JsonProperty;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
@@ -10,20 +11,27 @@ import lombok.NoArgsConstructor;
 @AllArgsConstructor
 public class Buildings {
 
-    @JsonAlias({"sumInsured","sum.insured"})
+    @JsonAlias("sumInsured")
+    @JsonProperty("sum.insured")
     private String sumInsured;
     private String description;
-    @JsonAlias({"coverType","cover.type"})
+    @JsonAlias("coverType")
+    @JsonProperty("cover.type")
     private String coverType;
-    @JsonAlias({"roofConstruction","roof.construction"})
+    @JsonAlias("roofConstruction")
+    @JsonProperty("roof.construction")
     private String roofConstruction;
     private String construction;
-    @JsonAlias({"geyserCover","geysercover"})
+    @JsonAlias("geyserCover")
+    @JsonProperty("geysercover")
     private String geyserCover;
-    @JsonAlias({"recentLossCount","recent.loss.count"})
+    @JsonAlias("recentLossCount")
+    @JsonProperty("recent.loss.count")
     private String recentLossCount;
-    @JsonAlias({"propertyOwnedClaim","property-owned-claim"})
+    @JsonAlias("propertyOwnedClaim")
+    @JsonProperty("property-owned-claim")
     private String propertyOwnedClaim;
-    @JsonAlias({"shLink","sh-link"})
-    private ShLink[] shLink;
+    @JsonAlias("shLinks")
+    @JsonProperty("sh-link")
+    private ShLink[] shLinks;
 }

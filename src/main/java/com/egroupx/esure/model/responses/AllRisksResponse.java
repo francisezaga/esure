@@ -1,5 +1,7 @@
 package com.egroupx.esure.model.responses;
 
+import com.fasterxml.jackson.annotation.JsonAlias;
+import com.fasterxml.jackson.annotation.JsonProperty;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
@@ -10,7 +12,10 @@ import lombok.NoArgsConstructor;
 public class AllRisksResponse {
 
     private Long id;
+    @JsonProperty("item-description")
     private String itemDescription;
+    @JsonProperty("sum.insured")
     private String sumInsured;
+    @JsonProperty("cover.type.id")
     private String coverTypeId;
 }

@@ -1,9 +1,7 @@
 package com.egroupx.esure.model;
 
 import com.fasterxml.jackson.annotation.JsonAlias;
-import com.fasterxml.jackson.annotation.JsonGetter;
 import com.fasterxml.jackson.annotation.JsonProperty;
-import com.fasterxml.jackson.annotation.JsonSetter;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
@@ -13,16 +11,22 @@ import lombok.NoArgsConstructor;
 @AllArgsConstructor
 public class Quotation {
 
-    @JsonAlias({"categoryId","Category_Id"})
+    @JsonAlias("categoryId")
+    @JsonProperty("Category_Id")
     private int categoryId;
-    @JsonAlias({"policyHolder","PolicyHolder"})
+    @JsonAlias("policyHolder")
+    @JsonProperty("PolicyHolder")
     private PolicyHolder[] policyHolder;
-    @JsonAlias({"allRisks","AllRisks"})
+    @JsonAlias("allRisks")
+    @JsonProperty("AllRisks")
     private AllRisks[] allRisks;
-    @JsonAlias({"buildings","Buildings"})
+    @JsonAlias("buildings")
+    @JsonProperty("Buildings")
     private Buildings[] buildings;
-    @JsonAlias({"householdContents","HouseholdContents"})
+    @JsonAlias("householdContents")
+    @JsonProperty("HouseholdContents")
     private HouseholdContents[] householdContents;
-    @JsonAlias({"motorVehicles","MotorVehicles"})
+    @JsonAlias("motorVehicles")
+    @JsonProperty("MotorVehicles")
     private MotorVehicles[] motorVehicles;
 }

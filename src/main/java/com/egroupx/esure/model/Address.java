@@ -2,6 +2,7 @@ package com.egroupx.esure.model;
 
 
 import com.fasterxml.jackson.annotation.JsonAlias;
+import com.fasterxml.jackson.annotation.JsonProperty;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
@@ -11,13 +12,16 @@ import lombok.NoArgsConstructor;
 @AllArgsConstructor
 public class Address {
 
-    @JsonAlias({"typeCd","type-cd"})
+    @JsonAlias("typeCd")
+    @JsonProperty("type-cd")
     private String typeCd;
-    @JsonAlias({"line1","line-1"})
+    @JsonAlias("line1")
+    @JsonProperty("line-1")
     private String line1;
     private String code;
     private String suburb;
-    @JsonAlias({"residentialAreaType","residential-area-type"})
+    @JsonAlias("residentialAreaType")
+    @JsonProperty("residential-area-type")
     private String residentialAreaType;
 
 }
