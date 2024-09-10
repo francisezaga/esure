@@ -11,4 +11,12 @@ import lombok.NoArgsConstructor;
 @AllArgsConstructor
 public class Car {
 
+    Long id;
+    private int year;
+    private String make;
+    private String model;
+    private String coverType;
+    private String parkingNight;
+    private Long customerId;
+
 }
