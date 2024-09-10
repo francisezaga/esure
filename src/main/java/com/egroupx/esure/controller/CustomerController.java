@@ -1,7 +1,7 @@
 package com.egroupx.esure.controller;
 
 
-import com.egroupx.esure.model.responses.APIResponse;
+import com.egroupx.esure.model.responses.api.APIResponse;
 import com.egroupx.esure.services.CustomerService;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;

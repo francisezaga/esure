@@ -1,8 +1,8 @@
 package com.egroupx.esure.controller;
 
 
-import com.egroupx.esure.model.Quotation;
-import com.egroupx.esure.model.responses.APIResponse;
+import com.egroupx.esure.dto.fsp_qoute.Quotation;
+import com.egroupx.esure.model.responses.api.APIResponse;
 
 import com.egroupx.esure.services.QuotationService;
 import org.springframework.http.MediaType;

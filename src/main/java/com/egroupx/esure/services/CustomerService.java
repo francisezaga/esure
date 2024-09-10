@@ -1,7 +1,7 @@
 package com.egroupx.esure.services;
 
 import com.egroupx.esure.model.Suburb;
-import com.egroupx.esure.model.responses.APIResponse;
+import com.egroupx.esure.model.responses.api.APIResponse;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;

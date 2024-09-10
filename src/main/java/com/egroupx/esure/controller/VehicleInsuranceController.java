@@ -1,6 +1,6 @@
 package com.egroupx.esure.controller;
 
-import com.egroupx.esure.model.responses.APIResponse;
+import com.egroupx.esure.model.responses.api.APIResponse;
 import com.egroupx.esure.services.VehicleInsuranceService;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -15,7 +15,6 @@ public class VehicleInsuranceController {
     public VehicleInsuranceController(VehicleInsuranceService carInsuranceService) {
         this.vehicleInsuranceService = carInsuranceService;
     }
-
 
     @GetMapping(value = {"/getVehicleManufacturers"})
     public Mono<ResponseEntity<APIResponse>> getVehicleManufacturers(@RequestParam int year) {

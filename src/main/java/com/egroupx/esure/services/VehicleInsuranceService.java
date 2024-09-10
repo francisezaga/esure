@@ -1,6 +1,6 @@
 package com.egroupx.esure.services;
 
-import com.egroupx.esure.model.responses.APIResponse;
+import com.egroupx.esure.model.responses.api.APIResponse;
 import com.egroupx.esure.model.VehicleManufacturer;
 import com.egroupx.esure.repository.VehicleInsuranceRepository;
 import org.slf4j.Logger;

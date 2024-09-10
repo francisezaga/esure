@@ -1,12 +1,11 @@
 package com.egroupx.esure.services;
 
-import com.egroupx.esure.model.Car;
-import com.egroupx.esure.model.Quotation;
+import com.egroupx.esure.dto.fsp_qoute.Quotation;
 
-import com.egroupx.esure.model.responses.APIResponse;
-import com.egroupx.esure.model.responses.CalculationsResponse;
-import com.egroupx.esure.model.responses.QuotationResponse;
-import com.egroupx.esure.util.AppUtil;
+import com.egroupx.esure.model.responses.api.APIResponse;
+import com.egroupx.esure.model.responses.fsp_qoute_policies.QuoteResultResponse;
+import com.egroupx.esure.model.responses.fsp_quote.CalculationsResponse;
+import com.egroupx.esure.model.responses.fsp_quote.QuotationResponse;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.slf4j.Logger;
@@ -18,7 +17,6 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 import org.springframework.web.reactive.function.BodyInserters;
 import org.springframework.web.reactive.function.client.WebClient;
-import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 
 import java.text.MessageFormat;
@@ -93,10 +91,10 @@ public class QuotationService {
                 .retrieve()
                 .toEntity(CalculationsResponse.class).map(responseEntity -> {
                     if (responseEntity.getStatusCode().is2xxSuccessful()) {
-                        Object resObj = responseEntity.getBody();
 
+                        CalculationsResponse calcResResult = responseEntity.getBody();
                         LOG.info("Successfully triggered calculation of quotation");
-                        return ResponseEntity.ok().body(new APIResponse(200, "success",resObj, Instant.now()));
+                        return ResponseEntity.ok().body(new APIResponse(200, "success",calcResResult, Instant.now()));
                     } else {
                         LOG.info(MessageFormat.format("Failed to trigger calculation of quotation. Error code {0}", responseEntity.getStatusCode().value()));
                         return ResponseEntity.badRequest().body(new APIResponse(responseEntity.getStatusCode().value(), "Failed to trigger calculation of quotation.", responseEntity.getStatusCode().value(), Instant.now()));
@@ -109,6 +107,7 @@ public class QuotationService {
 
     public Mono<ResponseEntity<APIResponse>> getQuotationResult(Long quotationId) {
         setConfigs(fspEndpointUrl);
+        ObjectMapper objectMapper = new ObjectMapper();
         return webClient.get()
                 .uri("/api/insure/calculations/status/quotations/"+quotationId)
                 .header(HttpHeaders.ACCEPT, "*/*")
@@ -116,9 +115,17 @@ public class QuotationService {
                 .toEntity(Object.class).map(responseEntity -> {
                     if (responseEntity.getStatusCode().is2xxSuccessful()) {
                         Object resObj = responseEntity.getBody();
+                        QuoteResultResponse quoteResultRes = null;
 
-                        LOG.info("Successfully retrieved quotation result");
-                        return ResponseEntity.ok().body(new APIResponse(200, "success",resObj, Instant.now()));
+                        try {
+                            String formattedQuotationRes = objectMapper.writeValueAsString(resObj);
+                            quoteResultRes = objectMapper.readValue(formattedQuotationRes, QuoteResultResponse.class);
+                            LOG.info("Successfully retrieved quotation result");
+                            return ResponseEntity.ok().body(new APIResponse(200, "success",quoteResultRes, Instant.now()));
+
+                        }catch(JsonProcessingException ex){
+                            return ResponseEntity.ok().body(new APIResponse(200, "success",resObj, Instant.now()));
+                        }
                     } else {
                         LOG.info(MessageFormat.format("Failed to retrieve quotation result. Error code {0}", responseEntity.getStatusCode().value()));
                         return ResponseEntity.badRequest().body(new APIResponse(responseEntity.getStatusCode().value(), "Failed to retrieve quotation result.", responseEntity.getStatusCode().value(), Instant.now()));
