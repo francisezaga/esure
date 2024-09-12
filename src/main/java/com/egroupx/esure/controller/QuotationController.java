@@ -2,13 +2,17 @@ package com.egroupx.esure.controller;
 
 
 import com.egroupx.esure.dto.fsp_qoute.Quotation;
+import com.egroupx.esure.model.Customer;
 import com.egroupx.esure.model.responses.api.APIResponse;
 
 import com.egroupx.esure.services.QuotationService;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
+
+import java.time.Instant;
 
 @RestController
 @RequestMapping(path = "/esure/quotation")
@@ -33,5 +37,12 @@ public class QuotationController {
     @GetMapping(value = {"/getQuotationResult/{quotationId}"})
     public Mono<ResponseEntity<APIResponse>> getQuotationResult(@PathVariable Long quotationId)  {
         return quotationService.getQuotationResult(quotationId);
+    }
+
+    @GetMapping(value = {"/getUserQuotations/{idNumber}"})
+    public Mono<ResponseEntity<APIResponse>> getQuotationsByUserId(@PathVariable String idNumber)  {
+        return quotationService.getQuotationByUserId(idNumber).flatMap(apiRes->{
+            return Mono.just(ResponseEntity.ok().body(apiRes));
+        });
     }
 }

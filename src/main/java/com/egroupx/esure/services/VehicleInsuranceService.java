@@ -1,16 +1,21 @@
 package com.egroupx.esure.services;
 
+import com.egroupx.esure.model.MotorVehicleShortTerm;
+import com.egroupx.esure.model.MotorVehicles;
+import com.egroupx.esure.model.SHLink;
 import com.egroupx.esure.model.responses.api.APIResponse;
 import com.egroupx.esure.model.VehicleManufacturer;
 import com.egroupx.esure.repository.VehicleInsuranceRepository;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.data.r2dbc.repository.Query;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 import org.springframework.web.reactive.function.client.WebClient;
+import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 
 import java.text.MessageFormat;
@@ -75,4 +80,65 @@ public class VehicleInsuranceService {
                     return Mono.just(ResponseEntity.internalServerError().body(new APIResponse(500, "Failed", "Failed to retrieve vehicle models", Instant.now())));
                 });
     }
+
+    Mono<String> saveVehicleDetails(Long fspQouteRefId, String year, String make, String model, String carColor, String metallicPaint, String quotationBasis, String alarmTypeId, String alarmByVesa, String tracingDevice){
+        return vehicleInsuranceRepository.saveVehicleDetails(fspQouteRefId, year, make, model, carColor, metallicPaint,quotationBasis,alarmTypeId,alarmByVesa,tracingDevice).flatMap(msg->{
+            LOG.info(MessageFormat.format("Completed saving vehicle details {0}",fspQouteRefId));
+            return Mono.just("Completed saving vehicle details "+ fspQouteRefId);
+        }).onErrorResume(err -> {
+            LOG.error(MessageFormat.format("Failed to vehicle details {0}",err.getMessage()));
+            return Mono.just("Failed to save vehicle details");
+        });
+    }
+
+    Mono<String> saveVehicleShLinkDetails(Long fspQouteRefId, String linkTypeId, Long fspShLinkRefId){
+        return vehicleInsuranceRepository.saveVehicleShLinkDetails(fspQouteRefId,linkTypeId,fspShLinkRefId).flatMap(msg->{
+            LOG.info(MessageFormat.format("Completed saving vehicle sh link details {0}",fspQouteRefId));
+            return Mono.just("Completed saving vehicle sh link details "+ fspQouteRefId);
+        }).onErrorResume(err -> {
+            LOG.error(MessageFormat.format("Failed to save vehicle sh link details {0}",err.getMessage()));
+            return Mono.just("Failed to save vehicle sh link details");
+        });
+    }
+
+    Mono<String> saveVehicleShortTermDetails(Long fspQouteRefId, String coverType, String useTypeId, String flatExcess, String overnightParkingCd, String overnightParkingTypeLocked){
+        return vehicleInsuranceRepository.saveVehicleShortTermDetails(fspQouteRefId,coverType,useTypeId,flatExcess,overnightParkingCd,overnightParkingTypeLocked).flatMap(msg->{
+            LOG.info(MessageFormat.format("Completed saving vehicle short term details {0}",fspQouteRefId));
+            return Mono.just("Completed saving vehicle short term details "+ fspQouteRefId);
+        }).onErrorResume(err -> {
+            LOG.error(MessageFormat.format("Failed to save vehicle short term details {0}",err.getMessage()));
+            return Mono.just("Failed to save vehicle short term details");
+        });
+    }
+
+    Flux<MotorVehicles> getMotorVehicleByQuoteRefId(Long qouteRefId) {
+        return vehicleInsuranceRepository.getMotorVehiclesByQuoteRefId(qouteRefId).flatMap(shLink -> {
+            LOG.info(MessageFormat.format("Successfully retrieved vehicle  detail {0}",qouteRefId));
+            return Mono.just(shLink);
+        }).onErrorResume(err -> {
+            LOG.error(MessageFormat.format("Failed to retrieve vehicle by id {0}. Error {1}",qouteRefId, err.getMessage()));
+            return Mono.empty();
+        });
+    }
+
+    Flux<SHLink> getMotorVehicleShLink(Long qouteRefId) {
+        return vehicleInsuranceRepository.getMotorVehicleLinkByQuoteRefId(qouteRefId).flatMap(shLink -> {
+            LOG.info(MessageFormat.format("Successfully retrieved vehicle sh link detail {0}",qouteRefId));
+            return Mono.just(shLink);
+        }).onErrorResume(err -> {
+            LOG.error(MessageFormat.format("Failed to retrieve vehicle sh link  detail by id {0}. Error {1}",qouteRefId, err.getMessage()));
+            return Mono.empty();
+        });
+    }
+
+    Mono<MotorVehicleShortTerm> getMotorVehicleShortTerm(Long qouteRefId) {
+        return vehicleInsuranceRepository.getMotorVehicleShortTermByQuoteRefId(qouteRefId).flatMap(shLink -> {
+            LOG.info(MessageFormat.format("Successfully retrieved vehicle short term detail {0}",qouteRefId));
+            return Mono.just(shLink);
+        }).onErrorResume(err -> {
+            LOG.error(MessageFormat.format("Failed to retrieve vehicle short term detail by id {0}. Error {1}",qouteRefId, err.getMessage()));
+            return Mono.empty();
+        });
+    }
+
 }

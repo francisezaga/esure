@@ -1,5 +1,6 @@
 package com.egroupx.esure.model.responses.fsp_quote;
 
+import com.fasterxml.jackson.annotation.JsonAlias;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import lombok.AllArgsConstructor;
 import lombok.Data;
@@ -11,19 +12,19 @@ import lombok.NoArgsConstructor;
 public class PolicyHolderResponse {
 
     private Long id;
-    @JsonProperty("private-or-org")
+    @JsonAlias("private-or-org")
     private String isPrivate;
     private String trust;
-    @JsonProperty("stakeholder-type")
+    @JsonAlias("stakeholder-type")
     private String stakeHolderType;
     private PersonResponse person;
-    @JsonProperty("short-term")
+    @JsonAlias("short-term")
     private PoliceHolderShortTermResponse shortTerm;
-    @JsonProperty("income-details")
+    @JsonAlias("income-details")
     private IncomeDetailsResponse incomeDetails;
-    @JsonProperty("insurance-details")
+    @JsonAlias("insurance-details")
     private InsuranceDetailsResponse insuranceDetails;
-    @JsonProperty("address")
+    @JsonAlias("address")
     private Object[] address;
 
 }

@@ -1,5 +1,6 @@
 package com.egroupx.esure.model.responses.fsp_qoute_policies;
 
+import com.fasterxml.jackson.annotation.JsonAlias;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import lombok.AllArgsConstructor;
 import lombok.Data;
@@ -10,23 +11,20 @@ import lombok.NoArgsConstructor;
 @AllArgsConstructor
 public class QuoteResultResponse {
 
-    @JsonProperty("id")
     private String id;
-    @JsonProperty("ver")
     private String ver;
-    @JsonProperty("category-id")
+    @JsonAlias("category-id")
     private String categoryId;
-    @JsonProperty("description")
+    @JsonAlias("description")
     private String description;
-    @JsonProperty("insured-amount")
+    @JsonAlias("insured-amount")
     private String insuredAmount;
-    @JsonProperty("status")
     private String status;
-    @JsonProperty("quoted-premium")
+    @JsonAlias("quoted-premium")
     private String quotedPremium;
-    @JsonProperty("error")
+    @JsonAlias("error")
     private ErrorResponse[] error;
-    @JsonProperty("requirement")
+    @JsonAlias("requirement")
     private Object[] requirement;
 
 }

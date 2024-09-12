@@ -10,6 +10,6 @@ import lombok.NoArgsConstructor;
 public class QuotationResultResponse {
 
     private Long id;
-    private PolicyResponse policies;
+    private PolicyResponse[] policies;
     private PolicyLinksResponse _links;
 }

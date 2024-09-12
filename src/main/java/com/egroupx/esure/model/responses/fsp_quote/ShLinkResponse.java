@@ -1,5 +1,6 @@
 package com.egroupx.esure.model.responses.fsp_quote;
 
+import com.fasterxml.jackson.annotation.JsonAlias;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import lombok.AllArgsConstructor;
 import lombok.Data;
@@ -11,6 +12,6 @@ import lombok.NoArgsConstructor;
 public class ShLinkResponse {
 
     private Long id;
-    @JsonProperty("link-type-id")
+    @JsonAlias("link-type-id")
     private String linkTypeId;
 }

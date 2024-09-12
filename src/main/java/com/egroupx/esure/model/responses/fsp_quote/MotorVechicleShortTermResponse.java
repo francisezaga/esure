@@ -1,6 +1,6 @@
 package com.egroupx.esure.model.responses.fsp_quote;
 
-import com.fasterxml.jackson.annotation.JsonProperty;
+import com.fasterxml.jackson.annotation.JsonAlias;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
@@ -8,16 +8,16 @@ import lombok.NoArgsConstructor;
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
-public class MotorVechicleShortTerm {
+public class MotorVechicleShortTermResponse {
 
-    @JsonProperty("cover-type")
+    @JsonAlias("cover-type")
     private String coverType;
-    @JsonProperty("use-type-id")
+    @JsonAlias("use-type-id")
     private String useTypeId;
-    @JsonProperty("flat-excess")
+    @JsonAlias("flat-excess")
     private String flatExcess;
-    @JsonProperty("overnight-parking-cd")
+    @JsonAlias("overnight-parking-cd")
     private String overnightParkingCd;
-    @JsonProperty("overnight-parking-type-locked")
+    @JsonAlias("overnight-parking-type-locked")
     private String overnightParkingTypeLocked;
 }

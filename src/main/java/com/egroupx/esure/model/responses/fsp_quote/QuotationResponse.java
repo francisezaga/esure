@@ -1,5 +1,6 @@
 package com.egroupx.esure.model.responses.fsp_quote;
 
+import com.fasterxml.jackson.annotation.JsonAlias;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
@@ -9,20 +10,20 @@ import lombok.NoArgsConstructor;
 @AllArgsConstructor
 @Getter
 public class QuotationResponse {
-    @JsonProperty("Id")
+    @JsonAlias("Id")
     private Long id;
-    @JsonProperty("Category_Id")
+    @JsonAlias("Category_Id")
     private int categoryId;
-    @JsonProperty("Status")
+    @JsonAlias("Status")
     private String status;
-    @JsonProperty("PolicyHolder")
-    private PolicyHolderResponse[] policyHolder;
-    @JsonProperty("AllRisks")
+    @JsonAlias("PolicyHolder")
+    private PolicyHolderResponse[] policyHolders;
+    @JsonAlias("AllRisks")
     private AllRisksResponse[] allRisks;
-    @JsonProperty("Buildings")
+    @JsonAlias("Buildings")
     private BuildingsResponse[] buildings;
-    @JsonProperty("HouseholdContents")
+    @JsonAlias("HouseholdContents")
     private HouseholdContentsResponse[] householdContents;
-    @JsonProperty("MotorVehicles")
+    @JsonAlias("MotorVehicles")
     private MotorVehiclesResponse[] motorVehicles;
 }

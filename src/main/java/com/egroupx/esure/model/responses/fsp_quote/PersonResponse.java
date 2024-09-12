@@ -1,5 +1,6 @@
 package com.egroupx.esure.model.responses.fsp_quote;
 
+import com.fasterxml.jackson.annotation.JsonAlias;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import lombok.AllArgsConstructor;
 import lombok.Data;
@@ -9,22 +10,22 @@ import lombok.NoArgsConstructor;
 @NoArgsConstructor
 @AllArgsConstructor
 public class PersonResponse {
-    @JsonProperty("full-names")
+    @JsonAlias("full-names")
     private String fullNames;
     private String surname;
     private String initials;
-    @JsonProperty("identification-no")
+    @JsonAlias("identification-no")
     private String idNumber;
-    @JsonProperty("title-cd")
+    @JsonAlias("title-cd")
     private String titleCd;
-    @JsonProperty("gender-cd")
+    @JsonAlias("gender-cd")
     private String genderCd;
-    @JsonProperty("birth-date")
+    @JsonAlias("birth-date")
     private String birthDate;
-    @JsonProperty("marital-status-cd")
+    @JsonAlias("marital-status-cd")
     private String maritalStatusCd;
-    @JsonProperty("id-type")
+    @JsonAlias("id-type")
     private String idType;
-    @JsonProperty("passport-number")
+    @JsonAlias("passport-number")
     private String passportNumber;
 }

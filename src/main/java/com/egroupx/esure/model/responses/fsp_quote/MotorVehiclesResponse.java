@@ -1,8 +1,6 @@
 package com.egroupx.esure.model.responses.fsp_quote;
 
-import com.egroupx.esure.dto.fsp_qoute.vehicle.MotorVechicleShortTerm;
-import com.egroupx.esure.dto.fsp_qoute.ShLink;
-import com.fasterxml.jackson.annotation.JsonProperty;
+import com.fasterxml.jackson.annotation.JsonAlias;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
@@ -15,20 +13,20 @@ public class MotorVehiclesResponse {
     private String year;
     private String make;
     private String model;
-    @JsonProperty("car-colour")
+    @JsonAlias("car-colour")
     private String carColour;
-    @JsonProperty("metalic-paint")
+    @JsonAlias("metalic-paint")
     private String metallicPaint;
-    @JsonProperty("quotation-basis")
+    @JsonAlias("quotation-basis")
     private String quotationBasis;
-    @JsonProperty("alarm-type-id")
+    @JsonAlias("alarm-type-id")
     private String alarmTypeId;
-    @JsonProperty("alarm-by-vesa")
+    @JsonAlias("alarm-by-vesa")
     private String alarmByVesa;
-    @JsonProperty("tracing-device")
+    @JsonAlias("tracing-device")
     private String tracingDevice;
-    @JsonProperty("short-term")
-    private MotorVechicleShortTerm motorVechicleShortTerm;
-    @JsonProperty("sh-link")
-    private ShLink[] shLinks;
+    @JsonAlias("short-term")
+    private MotorVechicleShortTermResponse motorVechicleShortTerm;
+    @JsonAlias("sh-link")
+    private ShLinkResponse[] shLinks;
 }

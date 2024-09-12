@@ -1,6 +1,6 @@
 package com.egroupx.esure.model.responses.fsp_quote;
 
-import com.fasterxml.jackson.annotation.JsonProperty;
+import com.fasterxml.jackson.annotation.JsonAlias;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
@@ -10,29 +10,29 @@ import lombok.NoArgsConstructor;
 @AllArgsConstructor
 public class HouseholdContentsResponse {
     private Long id;
-    @JsonProperty("sum.insured")
+    @JsonAlias("sum.insured")
     private String sumInsured;
     private String description;
-    @JsonProperty("restricted.cover")
+    @JsonAlias("restricted.cover")
     private String restrictedCover;
-    @JsonProperty("unocc.period")
+    @JsonAlias("unocc.period")
     private String unoccPeriod;
-    @JsonProperty("unrelated.count")
+    @JsonAlias("unrelated.count")
     private String unrelatedCount;
-    @JsonProperty("standard.walls")
+    @JsonAlias("standard.walls")
     private String standardWalls;
-    @JsonProperty("thatched.roof")
+    @JsonAlias("thatched.roof")
     private String thatchedRoof;
-    @JsonProperty("burglar.bars")
+    @JsonAlias("burglar.bars")
     private String burglarBars;
-    @JsonProperty("security.gates")
+    @JsonAlias("security.gates")
     private String securityGates;
-    @JsonProperty("alarm.in.working.order")
+    @JsonAlias("alarm.in.working.order")
     private String alarmInWorkingOrder;
-    @JsonProperty("recent.loss.count")
+    @JsonAlias("recent.loss.count")
     private String recentLossCount;
-    @JsonProperty("property-owned-claim")
+    @JsonAlias("property-owned-claim")
     private String propertyOwnedClaim;
-    @JsonProperty("sh-link")
+    @JsonAlias("sh-link")
     private ShLinkResponse[] shLinks;
 }

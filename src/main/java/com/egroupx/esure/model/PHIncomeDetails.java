@@ -1,16 +1,15 @@
 package com.egroupx.esure.model;
 
-
 import lombok.AllArgsConstructor;
-import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
 @Data
-@Builder
 @NoArgsConstructor
 @AllArgsConstructor
-public class Home {
-
-    Long id;
+public class PHIncomeDetails {
+    private Long id;
+    private Long fspQuoteRefId;
+    private Long fspPhRefId;
+    private String occupationCategory;
 }

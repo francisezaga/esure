@@ -1,4 +1,4 @@
-package com.egroupx.esure.model.responses.fsp_quote;
+package com.egroupx.esure.model;
 
 import com.fasterxml.jackson.annotation.JsonAlias;
 import lombok.AllArgsConstructor;
@@ -8,10 +8,8 @@ import lombok.NoArgsConstructor;
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
-public class EmailAddressResponse {
+public class EmailAddress {
 
-    @JsonAlias("type-cd")
     private String typeCd;
-    @JsonAlias("line-1")
     private String line1;
 }

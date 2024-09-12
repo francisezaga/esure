@@ -9,13 +9,13 @@ spring:
       jwtCookie: QPXYPUQZRE
 
   datasource:
-    url: jdbc:mariadb://localhost:3306/ezaga_dev?allowPublicKeyRetrieval=true&useSSL=false
+    url: jdbc:mariadb://localhost:3306/esure_db?allowPublicKeyRetrieval=true&useSSL=false
     username: root
     password: masterpwd@2024
     driver-class-name: org.mariadb.jdbc.Driver
 
   r2dbc:
-    url: r2dbc:mariadb://localhost:3306/ezaga_dev?allowPublicKeyRetrieval=true&useSSL=false
+    url: r2dbc:mariadb://localhost:3306/esure_db?allowPublicKeyRetrieval=true&useSSL=false
     username: root
     password: masterpwd@2024
 
