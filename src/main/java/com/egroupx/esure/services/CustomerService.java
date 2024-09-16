@@ -31,6 +31,9 @@ public class CustomerService {
     @Value("${egroupx.services.fspAPIKey:}")
     private String fspAPIKey;
 
+    @Value("${egroupx.email.sendEmail}")
+    private String sendEmail;
+
     private WebClient webClient;
 
     private final Logger LOG = LoggerFactory.getLogger(CustomerService.class);
@@ -39,9 +42,12 @@ public class CustomerService {
 
     private final AllRisksRepository allRisksRepository;
 
-    public CustomerService(CustomerRepository customerRepository, AllRisksRepository allRisksRepository) {
+    private final EmailService emailService;
+
+    public CustomerService(CustomerRepository customerRepository, AllRisksRepository allRisksRepository, EmailService emailService) {
         this.customerRepository = customerRepository;
         this.allRisksRepository = allRisksRepository;
+        this.emailService = emailService;
     }
 
     private void setConfigs(String endpointUrl) {
@@ -98,6 +104,37 @@ public class CustomerService {
         });
     }
 
+
+    Mono<String> saveAddressDetails(Long fspQouteRefId,String typeCd,String line1,String code,String suburb,String residentialAreaType){
+        return customerRepository.saveAddressDetails(fspQouteRefId,typeCd,line1,code,suburb,residentialAreaType).flatMap(msg->{
+            LOG.info(MessageFormat.format("Completed saving address details details {0}",fspQouteRefId));
+            return Mono.just("Completed saving address details "+ fspQouteRefId);
+        }).onErrorResume(err -> {
+            LOG.error(MessageFormat.format("Failed to save address details {0}",err.getMessage()));
+            return Mono.just("Failed to save address details");
+        });
+    }
+
+    Mono<String> saveTelAddressDetails(Long fspQouteRefId,String typeCd,String code,String number,String isCellphone,String isTelephone,String isBusiness,String isResidential){
+        return customerRepository.saveTelAddressDetails(fspQouteRefId,typeCd,code,number,isCellphone,isTelephone,isBusiness,isResidential).flatMap(msg->{
+            LOG.info(MessageFormat.format("Completed saving tel address details {0}",fspQouteRefId));
+            return Mono.just("Completed saving tel address details details "+ fspQouteRefId);
+        }).onErrorResume(err -> {
+            LOG.error(MessageFormat.format("Failed to save tel address details {0}",err.getMessage()));
+            return Mono.just("Failed to save tel address details");
+        });
+    }
+
+    Mono<String> saveEmailAddressDetails(Long fspQouteRefId,String typeCd,String line1){
+        return customerRepository.saveEmailAddressDetails(fspQouteRefId,typeCd,line1).flatMap(msg->{
+            LOG.info(MessageFormat.format("Completed saving email address details {0}",fspQouteRefId));
+            return Mono.just("Completed saving email address details "+ fspQouteRefId);
+        }).onErrorResume(err -> {
+            LOG.error(MessageFormat.format("Failed to save email address details {0}",err.getMessage()));
+            return Mono.just("Failed to save email address details");
+        });
+    }
+
     Mono<String> savePolicyHolderShortTermDetails(Long fspQouteRefId, Long fspPhrefId, String heldInsuranceLast39Days, String periodCompCarInsurance, String periodCompNonMotorInsurance, String hasConsent){
         return customerRepository.savePolicyHolderShortTermDetails(fspQouteRefId,fspPhrefId,heldInsuranceLast39Days, periodCompCarInsurance,periodCompNonMotorInsurance,hasConsent).flatMap(msg->{
             LOG.info(MessageFormat.format("Completed saving policy holder short term details {0}",fspQouteRefId));
@@ -146,7 +183,15 @@ public class CustomerService {
             LOG.error(MessageFormat.format("Failed to retrieve customer records by id. Error {0}",err.getMessage()));
             return Flux.empty();
         });
+    }
 
+    Mono<Customer> getCustomerByQuoteRef(Long fspQuoteRef) {
+        return customerRepository.getCustomerByQuoteRefId(fspQuoteRef).flatMap(customer -> {
+            return Mono.just(customer);
+        }).onErrorResume(err -> {
+            LOG.error(MessageFormat.format("Failed to retrieve customer by ref id. Error {0}", err.getMessage()));
+            return Mono.empty();
+        });
     }
 
     Mono<Quotation> getQuotationByQouteRefId(Long qouteRefId) {
@@ -199,7 +244,7 @@ public class CustomerService {
         });
     }
 
-    Mono<Address> getAddressDetails(Long qouteRefId) {
+    Flux<Address> getAddressDetails(Long qouteRefId) {
         return customerRepository.getAddressByQuoteRefId(qouteRefId).flatMap(address -> {
             LOG.info(MessageFormat.format("Successfully retrieved address detail {0}",qouteRefId));
             return Mono.just(address);
@@ -209,7 +254,7 @@ public class CustomerService {
         });
     }
 
-    Mono<TelAddress> getTelDetails(Long qouteRefId) {
+    Flux<TelAddress> getTelAddressDetails(Long qouteRefId) {
         return customerRepository.getTelAddressByQuoteRefId(qouteRefId).flatMap(telAddress -> {
             LOG.info(MessageFormat.format("Successfully retrieved tel address detail {0}",qouteRefId));
             return Mono.just(telAddress);
@@ -219,7 +264,7 @@ public class CustomerService {
         });
     }
 
-    Mono<EmailAddress> getEmailDetails(Long qouteRefId) {
+    Flux<EmailAddress> getEmailAddressDetails(Long qouteRefId) {
         return customerRepository.getEmailAddressByQuoteRefId(qouteRefId).flatMap(emailAddress -> {
             LOG.info(MessageFormat.format("Successfully retrieved email address detail {0}",qouteRefId));
             return Mono.just(emailAddress);
@@ -237,6 +282,27 @@ public class CustomerService {
             LOG.error(MessageFormat.format("Failed to retrieve all risks detail by id {0}. Error {1}",qouteRefId, err.getMessage()));
             return Mono.empty();
         });
+    }
+
+    Mono<String> sendEmailPolicyNotifcation(Long fspPolicyId) {
+
+        return customerRepository.getCustomerEmailDetailsByPolicyId(fspPolicyId)
+                .flatMap(customer -> {
+                    return emailService.sendEmail(customer,"New Esure Policy").flatMap(Mono::just);
+                }).onErrorResume(err -> {
+                    LOG.error(MessageFormat.format("Failed to send email policy ref {0}. Error {1}",fspPolicyId, err.getMessage()));
+                    return Mono.just("Failed to send email");
+                });
+    }
+
+    Mono<String> sendEmailQuotationNotification(Long fspPolicyId) {
+        return customerRepository.getCustomerEmailDetailsByQuoteRef(fspPolicyId)
+                .flatMap(customer -> {
+                    return emailService.sendEmail(customer,"New Esure Quotation").flatMap(Mono::just);
+                }).onErrorResume(err -> {
+                    LOG.error(MessageFormat.format("Failed to send email policy ref {0}. Error {1}",fspPolicyId, err.getMessage()));
+                    return Mono.just("Failed to send email");
+                });
     }
 
 }

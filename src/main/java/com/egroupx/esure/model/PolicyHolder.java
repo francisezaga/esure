@@ -4,6 +4,8 @@ import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
+import java.util.List;
+
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
@@ -18,5 +20,5 @@ public class PolicyHolder {
     private PHShortTerm shortTerm;
     private PHIncomeDetails incomeDetails;
     //private InsuranceDetails insuranceDetails;
-    private Object[] address;
+    private List<Object> addresses;
 }

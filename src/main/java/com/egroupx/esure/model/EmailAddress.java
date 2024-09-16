@@ -10,6 +10,7 @@ import lombok.NoArgsConstructor;
 @AllArgsConstructor
 public class EmailAddress {
 
+    private Long id;
     private String typeCd;
-    private String line1;
+    private String line_1;
 }

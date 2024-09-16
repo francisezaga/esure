@@ -1,6 +1,8 @@
 package com.egroupx.esure.repository;
 
 import com.egroupx.esure.model.*;
+import com.egroupx.esure.model.policies.Policy;
+import com.egroupx.esure.model.policies.PolicyAdditionalInfo;
 import org.springframework.data.r2dbc.repository.Query;
 import org.springframework.data.repository.reactive.ReactiveCrudRepository;
 import org.springframework.stereotype.Repository;
@@ -8,6 +10,7 @@ import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 
 import java.time.LocalDate;
+import java.time.LocalDateTime;
 
 @Repository
 public interface CustomerRepository extends ReactiveCrudRepository<Customer,Long> {
@@ -30,6 +33,21 @@ public interface CustomerRepository extends ReactiveCrudRepository<Customer,Long
     @Query("INSERT IGNORE INTO policy_holder_income_details SET fsp_quote_ref_id=:fspQouteRefId,fsp_ph_ref_id=:fspPhrefId,occupation_category=:occupationCategory")
     Mono<PHIncomeDetails> savePolicyHolderIncomeDetails(Long fspQouteRefId,Long fspPhrefId,String occupationCategory);
 
+    @Query("INSERT IGNORE INTO address SET fsp_quote_ref_id=:fspQouteRefId,type_cd=:typeCd,line_1=:line1,code=:code,suburb=:suburb,residential_area_type=:residentialAreaType")
+    Mono<Address>  saveAddressDetails(Long fspQouteRefId,String typeCd,String line1,String code,String suburb,String residentialAreaType);
+
+    @Query("INSERT IGNORE INTO tel_address SET fsp_quote_ref_id=:fspQouteRefId,type_cd=:typeCd,code=:code,number=:number,is_cellphone=:isCellphone,is_telephone=:isTelephone,is_business=:isBusiness,is_residential=:isResidential")
+    Mono<TelAddress>  saveTelAddressDetails(Long fspQouteRefId,String typeCd,String code,String number,String isCellphone,String isTelephone,String isBusiness,String isResidential);
+
+    @Query("INSERT IGNORE INTO email_address SET fsp_quote_ref_id=:fspQouteRefId,type_cd=:typeCd,line_1=:line1")
+    Mono<EmailAddress>  saveEmailAddressDetails(Long fspQouteRefId,String typeCd,String line1);
+
+    @Query("INSERT IGNORE INTO policy SET fsp_policy_id=:fspPolicyId,insurer_Id=:insurerId,category_id=:categoryId,date_quoted=:dateQuoted,status=:status,broker_code=:brokerCode,external_policy_no=:externalPolicyNo,quotation_id=:quotationId,quoted_premium=:quotedPremium,offering_id=:offeringId,offering_name=:offeringName,error_status=:errorStatus,id_number=:idNumber,e_sure_status=:eSureStatus ON DUPLICATE KEY UPDATE fsp_policy_id=:fspPolicyId,insurer_Id=:insurerId,category_id=:categoryId,date_quoted=:dateQuoted,status=:status,broker_code=:brokerCode,external_policy_no=:externalPolicyNo,quotation_id=:quotationId,quoted_premium=:quotedPremium,offering_id=:offeringId,offering_name=:offeringName,error_status=:errorStatus,id_number=:idNumber,e_sure_status=:eSureStatus")
+    Mono<Policy> savePolicy(Long fspPolicyId, Long insurerId, int categoryId, LocalDateTime dateQuoted, String status, Long brokerCode, String externalPolicyNo, Long quotationId, double quotedPremium, Long offeringId, String offeringName, String errorStatus, String idNumber, String eSureStatus);
+
+    @Query("INSERT IGNORE INTO policy_additional_info SET fsp_quote_ref_id=:fspQuoteRefId, fsp_policy_id=:fspPolicyId,contact=:contact,instructions=:instructions ON DUPLICATE KEY UPDATE fsp_quote_ref_id=:fspQuoteRefId, fsp_policy_id=:fspPolicyId,contact=:contact,instructions=:instructions;")
+    Mono<Policy> savePolicyAdditionalInfo(Long fspQouteRefId,Long fspPolicyId,String contact,String instructions);
+
     @Query("select * from customer where id_number=:idNumber")
     Flux<Customer>  getCustomerRecordsByUserId(String idNumber);
 
@@ -43,13 +61,13 @@ public interface CustomerRepository extends ReactiveCrudRepository<Customer,Long
     Mono<Customer>  getCustomerByQuoteRefId(Long fspQuoteRef);
 
     @Query("select * from address where fsp_quote_ref_id=:fspQuoteRef")
-    Mono<Address>  getAddressByQuoteRefId(Long fspQuoteRef);
+    Flux<Address>  getAddressByQuoteRefId(Long fspQuoteRef);
 
     @Query("select * from tel_address where fsp_quote_ref_id=:fspQuoteRef")
-    Mono<TelAddress>  getTelAddressByQuoteRefId(Long fspQuoteRef);
+    Flux<TelAddress>  getTelAddressByQuoteRefId(Long fspQuoteRef);
 
     @Query("select * from email_address where fsp_quote_ref_id=:fspQuoteRef")
-    Mono<EmailAddress>  getEmailAddressByQuoteRefId(Long fspQuoteRef);
+    Flux<EmailAddress>  getEmailAddressByQuoteRefId(Long fspQuoteRef);
 
     @Query("select * from policy_holder_short_term where fsp_quote_ref_id=:fspQuoteRef")
     Mono<PHShortTerm>  getPHShortTermByQuoteRefId(Long fspQuoteRef);
@@ -59,5 +77,19 @@ public interface CustomerRepository extends ReactiveCrudRepository<Customer,Long
 
     @Query("select * from policy_holder_short_term_lisense_detail where fsp_quote_ref_id=:fspQuoteRef")
     Flux<PHLicenseDetail>  getPHLicenseDetailByQuoteRefId(Long fspQuoteRef);
+
+    @Query("select * from policy where id_number=:idNumber")
+    Flux<Policy> getPoliciesByIdNumber(String idNumber);
+
+    @Query("select * from policy_additional_info where fsp_quote_ref_id=:fspQuoteRefId")
+    Mono<PolicyAdditionalInfo> getPolicyAdditionalInfo(Long fspQouteRefId);
+
+
+    @Query("SELECT customer.full_names,customer.fsp_quote_ref_id,customer.id_number, tel_address.code,tel_address.number,email_address.line_1 FROM customer INNER JOIN tel_address ON customer.fsp_quote_ref_id = tel_address.fsp_quote_ref_id INNER JOIN email_address ON tel_address.fsp_quote_ref_id = email_address.fsp_quote_ref_id where customer.fsp_quote_ref_id=:quoteRef order by customer.id desc limit 1;")
+    Mono<EmailCustomer> getCustomerEmailDetailsByQuoteRef(Long quoteRef);
+
+    @Query("SELECT policy.fsp_policy_id,customer.full_names,customer.fsp_quote_ref_id,customer.id_number, tel_address.code,tel_address.number,email_address.line_1 FROM policy INNER JOIN customer ON policy.quotation_id = customer.fsp_quote_ref_id INNER JOIN tel_address ON customer.fsp_quote_ref_id = tel_address.fsp_quote_ref_id INNER JOIN email_address ON tel_address.fsp_quote_ref_id = email_address.fsp_quote_ref_id where policy.fsp_policy_id=:policyId order by policy.id desc limit 1;")
+    Mono<EmailCustomer> getCustomerEmailDetailsByPolicyId(Long policyId);
+
 
 }

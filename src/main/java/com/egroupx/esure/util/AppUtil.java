@@ -30,7 +30,8 @@ public class AppUtil {
                 date = date1.toInstant().atZone(ZoneId.systemDefault()).toLocalDate();
             }
             if(strDate.contains("-")) {
-                Date date1 = new SimpleDateFormat("dd-MM-yyyy").parse(strDate);
+
+                Date date1 = new SimpleDateFormat("dd-MM-yyyy").parse(strDate.substring(0,11));
                 date = date1.toInstant().atZone(ZoneId.systemDefault()).toLocalDate();
             }
             return date;
@@ -39,4 +40,29 @@ public class AppUtil {
            return null;
         }
     }
+
+    public static int stringToInteger(String strInt){
+        try {
+            return Integer.parseInt(strInt);
+        }catch (NumberFormatException ex){
+            return -1;
+        }
+    }
+
+    public static Long stringToLong(String strLong){
+        try {
+            return Long.parseLong(strLong);
+        }catch (NumberFormatException ex){
+            return -1L;
+        }
+    }
+
+    public static double stringToDouble(String strLong){
+        try {
+            return Double.parseDouble(strLong);
+        }catch (NumberFormatException ex){
+            return -1;
+        }
+    }
+
 }

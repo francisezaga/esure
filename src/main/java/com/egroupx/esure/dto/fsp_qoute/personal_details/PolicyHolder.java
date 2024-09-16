@@ -6,6 +6,8 @@ import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
+import java.util.List;
+
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
@@ -23,6 +25,7 @@ public class PolicyHolder {
     @JsonProperty("income-details")
     private IncomeDetails incomeDetails;
     @JsonAlias("addresses")
-    private GenericAddress[] addresses;
+    @JsonProperty("address")
+    private List<GenericAddress> addresses;
 
 }

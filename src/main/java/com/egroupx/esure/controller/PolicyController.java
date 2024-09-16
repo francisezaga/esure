@@ -19,9 +19,18 @@ public class PolicyController {
         this.policyService = policyService;
     }
 
-
     @PostMapping(value = {"/acceptPolicy/{policyId}"},consumes = MediaType.APPLICATION_JSON_VALUE, produces = MediaType.APPLICATION_JSON_VALUE)
     public Mono<ResponseEntity<APIResponse>> acceptPolicy(@PathVariable Long policyId, @RequestBody Policy policy)  {
         return policyService.acceptPolicy(policyId,policy);
+    }
+
+    /*@PostMapping(value = {"/getPolicyById/{policyId}"},consumes = MediaType.APPLICATION_JSON_VALUE, produces = MediaType.APPLICATION_JSON_VALUE)
+    public Mono<ResponseEntity<APIResponse>> getPolicyById(@PathVariable Long policyId)  {
+        return policyService.getPolicyById(policyId);
+    }*/
+
+    @GetMapping(value = {"/getPoliciesByUserIdNumber/{idNumber}"}, produces = MediaType.APPLICATION_JSON_VALUE)
+    public Mono<ResponseEntity<APIResponse>> getPolicyByUserId(@PathVariable String idNumber)  {
+        return policyService.getPolicyByUserId(idNumber);
     }
 }
