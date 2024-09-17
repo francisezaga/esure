@@ -1,18 +1,12 @@
 package com.egroupx.esure.services;
 
 import com.egroupx.esure.dto.fsp_qoute.Quotation;
-import com.egroupx.esure.model.Address;
 import com.egroupx.esure.model.Customer;
-import com.egroupx.esure.model.EmailAddress;
-import com.egroupx.esure.model.TelAddress;
 import com.egroupx.esure.model.responses.api.APIResponse;
-import com.egroupx.esure.model.responses.fsp_qoute_policies.PolicyResponse;
 import com.egroupx.esure.model.responses.fsp_qoute_policies.QuotationResultResponse;
-import com.egroupx.esure.model.responses.fsp_qoute_policies.QuoteResultResponse;
 import com.egroupx.esure.model.responses.fsp_quote.*;
 import com.egroupx.esure.repository.CustomerRepository;
 import com.egroupx.esure.util.AppUtil;
-import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;

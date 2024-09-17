@@ -194,7 +194,7 @@ public class LifeInsuranceService {
         });
     }
 
-    public Mono<ResponseEntity<APIResponse>> extendedMember(ExtendedMember extendedMemberDTO) {
+    public Mono<ResponseEntity<APIResponse>> createExtendedMember(ExtendedMember extendedMemberDTO) {
         setConfigs(pol360EndpointUrl);
 
         return tokenService.getPol360APIToken().flatMap(

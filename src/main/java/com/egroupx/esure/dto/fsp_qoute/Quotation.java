@@ -19,7 +19,7 @@ public class Quotation {
     @JsonAlias("categoryId")
     @JsonProperty("Category_Id")
     private int categoryId;
-    @JsonAlias("policyHolder")
+    @JsonAlias("policyHolders")
     @JsonProperty("PolicyHolder")
     private PolicyHolder[] policyHolder;
     @JsonAlias("allRisks")
