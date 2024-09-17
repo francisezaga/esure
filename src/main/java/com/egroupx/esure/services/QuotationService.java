@@ -25,7 +25,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 import org.springframework.web.reactive.function.BodyInserters;
 import org.springframework.web.reactive.function.client.WebClient;
-import reactor.core.Disposable;
+
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 
@@ -39,7 +39,7 @@ public class QuotationService {
     @Value("${egroupx.services.fspEndpointUrl}")
     private String fspEndpointUrl;
 
-    @Value("${egroupx.services.fspAPIKey:}")
+    @Value("${egroupx.services.fspAPIKey}")
     private String fspAPIKey;
 
     private WebClient webClient;

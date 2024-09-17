@@ -65,5 +65,5 @@ public class PolicyResponse {
     @JsonAlias("error")
     private ErrorResponse[] errors;
     @JsonAlias("requirement")
-    private Object[] requirements;
+    private RequirementResponse[] requirements;
 }

@@ -1,7 +1,7 @@
 package com.egroupx.esure.services;
 
 import com.egroupx.esure.dto.fsp_policy.Policy;
-import com.egroupx.esure.model.*;
+
 import com.egroupx.esure.model.policies.PolicyAdditionalInfo;
 import com.egroupx.esure.model.responses.api.APIResponse;
 
@@ -24,11 +24,10 @@ import reactor.core.publisher.Mono;
 
 import java.text.MessageFormat;
 import java.time.Instant;
-import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.Base64;
-import java.util.List;
+
 
 @Service
 public class PolicyService {

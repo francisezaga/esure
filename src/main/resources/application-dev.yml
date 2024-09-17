@@ -51,6 +51,8 @@ egroupx:
   services:
     fspEndpointUrl: https://test.fspsolutions.com
     fspAPIKey: 1Am}@vdV0mJV[J4vL=k?!e+H~3=].NP2
+    pol360EndpointUrl: https://web04.pol360.co.za
+    pol360TokenGenClientName: TautonaMore
   email:
     host: mail.ezaga.co.za
     port: 587
