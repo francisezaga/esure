@@ -24,6 +24,9 @@ public class TokenService {
     @Value("${egroupx.services.pol360TokenGenClientName}")
     private String pol360TokenGenClientName;
 
+    @Value("${egroupx.services.pol360TokenUUID}")
+    private String pol360TokenUUID;
+
     private final Logger LOG = LoggerFactory.getLogger(TokenService.class);
 
     private WebClient webClientPost;
@@ -42,7 +45,7 @@ public class TokenService {
         return webClientPost.get()
                 .uri("/api/360APITEST.php?Function=GenerateAuthToken&ClientName="+pol360TokenGenClientName)
                 .header(HttpHeaders.ACCEPT, "*/*")
-                .header("x-authorization-token", UUID.randomUUID().toString())
+                .header("x-authorization-token", pol360TokenUUID)
                 .retrieve()
                 .toEntity(TokenResponse.class).map(responseEntity -> {
                     if (responseEntity.getStatusCode().is2xxSuccessful()) {

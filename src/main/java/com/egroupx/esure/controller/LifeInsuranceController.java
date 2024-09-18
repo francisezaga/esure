@@ -1,5 +1,6 @@
 package com.egroupx.esure.controller;
 
+import com.egroupx.esure.dto.v360.ProductDTO;
 import com.egroupx.esure.model.life.*;
 import com.egroupx.esure.model.responses.api.APIResponse;
 import com.egroupx.esure.services.LifeInsuranceService;
@@ -23,7 +24,7 @@ public class LifeInsuranceController {
     }
 
     @PostMapping(value = {"/createBeneficiary"})
-    public Mono<ResponseEntity<APIResponse>> calculateQuotation(@RequestBody Beneficiary beneficiary)  {
+    public Mono<ResponseEntity<APIResponse>> createBeneficiary(@RequestBody Beneficiary beneficiary)  {
         return lifeInsuranceService.createBeneficiary(beneficiary);
     }
 
@@ -33,7 +34,7 @@ public class LifeInsuranceController {
     }
 
     @PostMapping(value = {"/createExtendedMember"})
-    public Mono<ResponseEntity<APIResponse>> calculateQuotation(@RequestBody ExtendedMember extendedMember)  {
+    public Mono<ResponseEntity<APIResponse>> createExMember(@RequestBody ExtendedMember extendedMember)  {
         return lifeInsuranceService.createExtendedMember(extendedMember);
     }
     @PostMapping(value = {"/createSpouse"})
@@ -43,5 +44,10 @@ public class LifeInsuranceController {
     @PostMapping(value = {"/addBankDetails"})
     public Mono<ResponseEntity<APIResponse>> addBankDetails(@PathVariable BankDetails bankDetails)  {
         return lifeInsuranceService.addBankDetails(bankDetails);
+    }
+
+    @GetMapping(value = {"/getProductByCode"})
+    public Mono<ResponseEntity<APIResponse>> getProductByCode(@RequestBody ProductDTO productDTO)  {
+        return lifeInsuranceService.getProductsByCode(productDTO);
     }
 }
