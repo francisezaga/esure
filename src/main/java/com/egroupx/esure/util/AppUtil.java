@@ -23,21 +23,25 @@ public class AppUtil {
     }
 
     public static LocalDate formatDate(String strDate){
-        try{
-            LocalDate date = null;
-            if(strDate.contains("/")){
-                Date date1 = new SimpleDateFormat("dd-MM-yyyy").parse(strDate.replaceAll("/","-"));
-                date = date1.toInstant().atZone(ZoneId.systemDefault()).toLocalDate();
-            }
-            if(strDate.contains("-")) {
+        if(strDate!=null) {
+            try {
+                LocalDate date = null;
+                if (strDate.contains("/")) {
+                    Date date1 = new SimpleDateFormat("dd-MM-yyyy").parse(strDate.replaceAll("/", "-"));
+                    date = date1.toInstant().atZone(ZoneId.systemDefault()).toLocalDate();
+                }
+                if (strDate.contains("-")) {
 
-                Date date1 = new SimpleDateFormat("dd-MM-yyyy").parse(strDate.substring(0,11));
-                date = date1.toInstant().atZone(ZoneId.systemDefault()).toLocalDate();
+                    Date date1 = new SimpleDateFormat("dd-MM-yyyy").parse(strDate.substring(0, 11));
+                    date = date1.toInstant().atZone(ZoneId.systemDefault()).toLocalDate();
+                }
+                return date;
+            } catch (ParseException psEx) {
+                return null;
             }
-            return date;
         }
-        catch(ParseException psEx){
-           return null;
+        else{
+            return null;
         }
     }
 

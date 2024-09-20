@@ -33,12 +33,12 @@ public class Spouse {
     private String gender;
     @JsonAlias("dateOfBirth")
     @JsonProperty("DateOfBirth")
-    private LocalDate dateOfBirth;
+    private String dateOfBirth;
     @JsonAlias("age")
     @JsonProperty("Age")
     private String age;
-    @JsonAlias("mainMember")
-    @JsonProperty("MainMember")
+    @JsonAlias("mainMemberId")
+    @JsonProperty("MainMemberID")
     private String mainMemberID;
     @JsonAlias("policyNumber")
     @JsonProperty("PolicyNumber")

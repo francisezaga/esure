@@ -219,11 +219,11 @@ public class LifeInsuranceService {
                                         LifeAPIResponse lifeAPIResponse = responseEntity.getBody();
                                         if (lifeAPIResponse != null && lifeAPIResponse.getResult()!=null && !lifeAPIResponse.getResult().toLowerCase().contains("err")) {
                                             String memberId = lifeAPIResponse != null ? String.valueOf(lifeAPIResponse.getMemberID()) : "";
-                                            LOG.error(MessageFormat.format("Member successfully created member id{0}", memberId));
+                                            LOG.error(MessageFormat.format("Dependent successfully created id{0}", memberId));
                                             return new APIResponse(200, "success", lifeAPIResponse, Instant.now());
                                         } else {
-                                            LOG.error(MessageFormat.format("Failed to create member. Response status {0}", lifeAPIResponse.getMessage()));
-                                            return new APIResponse(400, "fail", "Failed to create member. Response " + lifeAPIResponse.getMessage(), Instant.now());
+                                            LOG.error(MessageFormat.format("Failed to create dependent. Response status {0}", lifeAPIResponse.getMessage()));
+                                            return new APIResponse(400, "fail", "Failed to create dependent. Response " + lifeAPIResponse.getMessage(), Instant.now());
                                         }
                                     } else {
                                         LOG.error(MessageFormat.format("Failed to create dependent. Response status {0}", responseEntity.getStatusCode().value()));
@@ -343,22 +343,22 @@ public class LifeInsuranceService {
                                         LifeAPIResponse lifeAPIResponse = responseEntity.getBody();
                                         if (lifeAPIResponse != null && lifeAPIResponse.getResult()!=null && !lifeAPIResponse.getResult().toLowerCase().contains("err")) {
                                             String memberId = lifeAPIResponse != null ? String.valueOf(lifeAPIResponse.getMemberID()) : "";
-                                            LOG.error(MessageFormat.format("Member successfully created member id{0}", memberId));
+                                            LOG.error(MessageFormat.format("Spouse successfully created id{0}", memberId));
                                             return new APIResponse(200, "success", lifeAPIResponse, Instant.now());
                                         } else {
-                                            LOG.error(MessageFormat.format("Failed to create member. Response status {0}", lifeAPIResponse.getMessage()));
-                                            return new APIResponse(400, "fail", "Failed to create member. Response " + lifeAPIResponse.getMessage(), Instant.now());
+                                            LOG.error(MessageFormat.format("Failed to create spouse. Response status {0}", lifeAPIResponse.getMessage()));
+                                            return new APIResponse(400, "fail", "Failed to create spouse. Response " + lifeAPIResponse.getMessage(), Instant.now());
                                         }
                                     } else {
-                                        LOG.error(MessageFormat.format("Failed to create member. Response status {0}", responseEntity.getStatusCode().value()));
-                                        return new APIResponse(400, "fail", "Failed to create member. Response code " + responseEntity.getStatusCode().value(), Instant.now());
+                                        LOG.error(MessageFormat.format("Failed to create spouse. Response status {0}", responseEntity.getStatusCode().value()));
+                                        return new APIResponse(400, "fail", "Failed to create spouse. Response code " + responseEntity.getStatusCode().value(), Instant.now());
                                     }
                                 }).onErrorResume(error -> {
-                                    LOG.error(MessageFormat.format("Failed to create member {0}", error.getMessage()));
-                                    return Mono.just(new APIResponse(400, "fail", "Failed to create member", Instant.now()));
+                                    LOG.error(MessageFormat.format("Failed to create spouse {0}", error.getMessage()));
+                                    return Mono.just(new APIResponse(400, "fail", "Failed to create spouse", Instant.now()));
                                 });
                     } else {
-                        return Mono.just(new APIResponse(400, "fail", "Error creating member.", Instant.now()));
+                        return Mono.just(new APIResponse(400, "fail", "Error creating spouse.", Instant.now()));
                     }
                 }).flatMap(apiResponse -> {
             if (apiResponse.getStatus() == 200) {
