@@ -1,6 +1,7 @@
 package com.egroupx.esure.services;
 
 import com.egroupx.esure.dto.auth.SMSDTO;
+import com.egroupx.esure.model.auth.OTP;
 import com.egroupx.esure.model.responses.api.APIResponse;
 import com.egroupx.esure.repository.AuthRepository;
 import org.slf4j.Logger;
@@ -15,6 +16,7 @@ import reactor.core.publisher.Mono;
 
 import java.security.SecureRandom;
 import java.text.MessageFormat;
+import java.time.Duration;
 import java.time.Instant;
 import java.time.LocalDateTime;
 import java.time.temporal.ChronoUnit;
@@ -108,33 +110,19 @@ public class AuthService {
                     count = otpObj.getCount();
                 }
                 if(count<=3) {
-                    return webClient.post()
-                            .uri("")
-                            .header(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON_VALUE)
-                            .header(HttpHeaders.ACCEPT, "*/*")
-                            .bodyValue(smsDTO)
-                            .retrieve()
-                            .toEntity(Object.class).map(responseEntity->{
-                                if (responseEntity.getStatusCode().is2xxSuccessful()) {
-                                    return new APIResponse(200,"success","OTP sms successfully send",Instant.now());
-                                }else{
-                                    LOG.error("OTP sms could not be send");
-                                    return new APIResponse(400,"fail","OPT sms could not be send",Instant.now());
-                                }
-                            })
-                            .flatMap(Mono::just)
-                            .onErrorResume(error->{
-                                LOG.error("OTP sms could not be send. Error "+ error.getMessage());
-                                return Mono.just(new APIResponse(400,"fail","OPT sms could not be send",Instant.now()));
-                            });
+                    return sendOPT(smsDTO);
                 }else{
                     LOG.error(MessageFormat.format("Failed to send otp. Error {0}", "Too many request received"));
-                    return Mono.just(new APIResponse(400, "fail", "Failed to send otp. Too many request received.", Instant.now()));
+                    return Mono.just(new APIResponse(400, "fail", "Failed to send otp. Too many request received. Please try again later", Instant.now()));
                 }
-            }).onErrorResume(error->{
+            }).switchIfEmpty(
+                    Mono.just("next").flatMap(next->{
+                        return sendOPT(smsDTO);
+                            })
+                    .onErrorResume(error->{
                 LOG.error(MessageFormat.format("Failed to retrieve otp details. Error {0}", error.getMessage()));
                 return Mono.just(new APIResponse(400, "fail", "Failed to retrieve otp details", Instant.now()));
-            });
+            }));
         }else{
             return Mono.just(new APIResponse(400,"fail","OPT sms could not be send",Instant.now()));
         }
@@ -165,7 +153,7 @@ public class AuthService {
                         });
             }else{
                 LOG.error(MessageFormat.format("Failed to save otp details. Error {0}", "Too many request received"));
-                return Mono.just(new APIResponse(400, "fail", "Failed to save otp details. Too many request received.", Instant.now()));
+                return Mono.just(new APIResponse(400, "fail", "Failed to send otp. Too many request received.Please try again later.", Instant.now()));
             }
         }).onErrorResume(error->{
             LOG.error(MessageFormat.format("Failed to retrieve otp details. Error {0}", error.getMessage()));
@@ -188,6 +176,29 @@ public class AuthService {
                 .onErrorResume(err -> {
                     LOG.error(MessageFormat.format("Failed to retrieve otp details. Error {0}", err.getMessage()));
                     return Mono.just(new APIResponse(400,"fail","Failed to get otp",Instant.now()));
+                });
+    }
+
+    Mono<APIResponse> sendOPT(SMSDTO smsDTO){
+     return webClient.post()
+                .uri("")
+                .header(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON_VALUE)
+                .header(HttpHeaders.ACCEPT, "*/*")
+                .bodyValue(smsDTO)
+                .retrieve()
+                .toEntity(Object.class).map(responseEntity->{
+                    if (responseEntity.getStatusCode().is2xxSuccessful()) {
+                        return new APIResponse(200,"success","OTP sms successfully send",Instant.now());
+                    }else{
+                        LOG.error("OTP sms could not be send");
+                        return new APIResponse(400,"fail","OPT sms could not be send",Instant.now());
+                    }
+                })
+                .timeout(Duration.ofSeconds(2))
+                .flatMap(Mono::just)
+                .onErrorResume(error->{
+                    LOG.error("OTP sms could not be send. Error "+ error.getMessage());
+                    return Mono.just(new APIResponse(400,"fail","OPT sms could not be send",Instant.now()));
                 });
     }
 }
