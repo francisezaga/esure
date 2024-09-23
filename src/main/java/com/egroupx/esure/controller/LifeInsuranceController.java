@@ -47,7 +47,7 @@ public class LifeInsuranceController {
     }
 
     @PostMapping(value = {"/findProductByCode"})
-    public Mono<ResponseEntity<APIResponse>> getProductByCode(@RequestBody ProductDTO productDTO)  {
-        return lifeInsuranceService.getProductsByCode(productDTO);
+    public Mono<ResponseEntity<APIResponse>> findProductByCode(@RequestBody ProductDTO productDTO)  {
+        return lifeInsuranceService.findProductsByCode(productDTO);
     }
 }

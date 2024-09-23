@@ -462,7 +462,7 @@ public class LifeInsuranceService {
         });
     }
 
-    public Mono<ResponseEntity<APIResponse>> getProductsByCode(ProductDTO productDTO) {
+    public Mono<ResponseEntity<APIResponse>> findProductsByCode(ProductDTO productDTO) {
         setConfigs(pol360EndpointUrl);
 
         return tokenService.getPol360APIToken().flatMap(
