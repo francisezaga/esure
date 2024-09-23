@@ -1,5 +1,6 @@
 package com.egroupx.esure.repository;
 
+import com.egroupx.esure.model.auth.AppUser;
 import com.egroupx.esure.model.auth.OTP;
 import org.springframework.data.r2dbc.repository.Query;
 import org.springframework.data.repository.reactive.ReactiveCrudRepository;
@@ -16,5 +17,8 @@ public interface AuthRepository extends ReactiveCrudRepository<OTP,Long> {
 
     @Query("SELECT * from otp_auth_request where cell_number=:cellNumber")
     Mono<OTP> getOTPRequestDetails(String cellNumber);
+
+    @Query("SELECT * from app_user where username=:userName")
+    Mono<AppUser> findByUsername(String userName);
 
 }
