@@ -42,11 +42,11 @@ public class LifeInsuranceController {
         return lifeInsuranceService.createSpouse(spouse);
     }
     @PostMapping(value = {"/addBankDetails"})
-    public Mono<ResponseEntity<APIResponse>> addBankDetails(@PathVariable BankDetails bankDetails)  {
+    public Mono<ResponseEntity<APIResponse>> addBankDetails(@RequestBody BankDetails bankDetails)  {
         return lifeInsuranceService.addBankDetails(bankDetails);
     }
 
-    @GetMapping(value = {"/getProductByCode"})
+    @PostMapping(value = {"/findProductByCode"})
     public Mono<ResponseEntity<APIResponse>> getProductByCode(@RequestBody ProductDTO productDTO)  {
         return lifeInsuranceService.getProductsByCode(productDTO);
     }

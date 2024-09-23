@@ -1,6 +1,8 @@
 package com.egroupx.esure.services;
 
 import com.egroupx.esure.dto.v360.ProductDTO;
+import com.egroupx.esure.exceptions.LifeAPIErrorException;
+import com.egroupx.esure.exceptions.LifeAPIErrorHandler;
 import com.egroupx.esure.model.life.*;
 import com.egroupx.esure.model.responses.api.APIResponse;
 import com.egroupx.esure.model.responses.life.LifeAPIResponse;
@@ -14,10 +16,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
 
-import org.springframework.http.HttpHeaders;
-import org.springframework.http.HttpMethod;
-import org.springframework.http.MediaType;
-import org.springframework.http.ResponseEntity;
+import org.springframework.http.*;
 import org.springframework.stereotype.Service;
 import org.springframework.web.reactive.function.BodyInserters;
 import org.springframework.web.reactive.function.client.WebClient;
@@ -25,7 +24,6 @@ import reactor.core.publisher.Mono;
 
 import java.text.MessageFormat;
 import java.time.Instant;
-import java.time.LocalDate;
 import java.util.Base64;
 
 @Service
@@ -64,7 +62,6 @@ public class LifeInsuranceService {
                 ).build();
     }
 
-
     public Mono<ResponseEntity<APIResponse>> createMember(Member memberDTO) {
         setConfigs(pol360EndpointUrl);
 
@@ -88,6 +85,11 @@ public class LifeInsuranceService {
                                  .header("Authorization", bearerToken)
                                 .body(BodyInserters.fromObject(formattedReq))
                                 .retrieve()
+                                .onStatus(HttpStatusCode::isError, response -> response.bodyToMono(String.class) // error body as String or other class
+                                        .flatMap(error -> {
+                                            LOG.error(error);
+                                            return Mono.error(new LifeAPIErrorException(error));
+                                        }))
                                 .toEntity(LifeAPIResponse.class).map(responseEntity -> {
                                    if (responseEntity.getStatusCode().is2xxSuccessful()) {
                                         LifeAPIResponse lifeAPIResponse = responseEntity.getBody();
@@ -105,7 +107,8 @@ public class LifeInsuranceService {
                                     }
                                 }).onErrorResume(error -> {
                                     LOG.error(MessageFormat.format("Failed to create member {0}", error.getMessage()));
-                                    return Mono.just(new APIResponse(400, "fail", "Failed to create member", Instant.now()));
+                                    String errorMsg = LifeAPIErrorHandler.handleLifeAPIError(error.getMessage()).isEmpty()? error.getMessage() : LifeAPIErrorHandler.handleLifeAPIError(error.getMessage());
+                                    return Mono.just(new APIResponse(400, "fail", "Failed to create member."+errorMsg, Instant.now()));
                                 });
                     } else {
                         return Mono.just(new APIResponse(400, "fail", "Error creating member.", Instant.now()));
@@ -113,9 +116,7 @@ public class LifeInsuranceService {
                 }).flatMap(apiResponse -> {
             if (apiResponse.getStatus() == 200) {
                 LifeAPIResponse lifeAPIResponse = AppUtil.dtoToEntity(apiResponse.getData(),new LifeAPIResponse());
-                return saveMember(lifeAPIResponse.getPolicyNumber(), memberDTO.getClient(), memberDTO.getAgentCode(), memberDTO.getPolicyNumber(), memberDTO.getBrokerCode(), memberDTO.getTitle(), memberDTO.getFirstName(), memberDTO.getSurname(), memberDTO.getIdNumber(), memberDTO.getGender(), AppUtil.formatDate(memberDTO.getDateOfBirth()),
-                        memberDTO.getAge(), memberDTO.getCellNumber(), memberDTO.getAltCellNumber(), memberDTO.getWorkNumber(), memberDTO.getHomeNumber(), memberDTO.getEmail(), memberDTO.getFax(), memberDTO.getContactType(), memberDTO.getPostalAddress1(), memberDTO.getPostalAddress2(), memberDTO.getPostalAddress3(), memberDTO.getPostalCode(), memberDTO.getResidentialAddress1(),
-                        memberDTO.getResidentialAddress2(), memberDTO.getResidentialAddress3(), memberDTO.getResidentialCode(), memberDTO.getMemberType(), memberDTO.getPremium(), memberDTO.getCover(), memberDTO.getAddPolicyID(), memberDTO.getStatusCode())
+                return saveMember(memberDTO)
                         .then(Mono.just("next"))
                         .flatMap(msg->{
                             return Mono.just(ResponseEntity.ok(new APIResponse(200,"success",lifeAPIResponse,Instant.now())));
@@ -129,6 +130,7 @@ public class LifeInsuranceService {
             }
         });
     }
+
     public Mono<ResponseEntity<APIResponse>> createBeneficiary(Beneficiary beneficiaryDTO) {
         setConfigs(pol360EndpointUrl);
 
@@ -152,6 +154,11 @@ public class LifeInsuranceService {
                                 .header("Authorization", bearerToken)
                                 .body(BodyInserters.fromObject(formattedReq))
                                 .retrieve()
+                                .onStatus(HttpStatusCode::isError, response -> response.bodyToMono(String.class) // error body as String or other class
+                                        .flatMap(error -> {
+                                            LOG.error(error);
+                                            return Mono.error(new LifeAPIErrorException(error));
+                                        }))
                                 .toEntity(LifeAPIResponse.class).map(responseEntity -> {
                                     if (responseEntity.getStatusCode().is2xxSuccessful()) {
                                         LifeAPIResponse lifeAPIResponse = responseEntity.getBody();
@@ -164,27 +171,26 @@ public class LifeInsuranceService {
                                             return new APIResponse(400, "fail", "Failed to create member. Response " + lifeAPIResponse.getMessage(), Instant.now());
                                         }
                                     } else {
-                                        LOG.error(MessageFormat.format("Failed to create member. Response status {0}", responseEntity.getStatusCode().value()));
-                                        return new APIResponse(400, "fail", "Failed to create member. Response code " + responseEntity.getStatusCode().value(), Instant.now());
+                                        LOG.error(MessageFormat.format("Failed to create beneficiary member. Response status {0}", responseEntity.getStatusCode().value()));
+                                        return new APIResponse(400, "fail", "Failed to create beneficiary member. Response code " + responseEntity.getStatusCode().value(), Instant.now());
                                     }
                                 }).onErrorResume(error -> {
-                                    LOG.error(MessageFormat.format("Failed to create member {0}", error.getMessage()));
-                                    return Mono.just(new APIResponse(400, "fail", "Failed to create member", Instant.now()));
+                                    LOG.error(MessageFormat.format("Failed to create beneficiary member {0}", error.getMessage()));
+                                    String errorMsg = LifeAPIErrorHandler.handleLifeAPIError(error.getMessage()).isEmpty()? error.getMessage() : LifeAPIErrorHandler.handleLifeAPIError(error.getMessage());
+                                    return Mono.just(new APIResponse(400, "fail", "Failed to create beneficiary  member. "+ errorMsg, Instant.now()));
                                 });
                     } else {
-                        return Mono.just(new APIResponse(400, "fail", "Error creating member.", Instant.now()));
+                        return Mono.just(new APIResponse(400, "fail", "Error creating beneficiary member.", Instant.now()));
                     }
                 }).flatMap(apiResponse -> {
             if (apiResponse.getStatus() == 200) {
                 LifeAPIResponse lifeAPIResponse = AppUtil.dtoToEntity(apiResponse.getData(),new LifeAPIResponse());
-                /*return saveMember(lifeAPIResponse.getPolicyNumber(), memberDTO.getClient(), memberDTO.getAgentCode(), memberDTO.getPolicyNumber(), memberDTO.getBrokerCode(), memberDTO.getTitle(), memberDTO.getFirstName(), memberDTO.getSurname(), memberDTO.getIdNumber(), memberDTO.getGender(), AppUtil.formatDate(memberDTO.getDateOfBirth()),
-                        memberDTO.getAge(), memberDTO.getCellNumber(), memberDTO.getAltCellNumber(), memberDTO.getWorkNumber(), memberDTO.getHomeNumber(), memberDTO.getEmail(), memberDTO.getFax(), memberDTO.getContactType(), memberDTO.getPostalAddress1(), memberDTO.getPostalAddress2(), memberDTO.getPostalAddress3(), memberDTO.getPostalCode(), memberDTO.getResidentialAddress1(),
-                        memberDTO.getResidentialAddress2(), memberDTO.getResidentialAddress3(), memberDTO.getResidentialCode(), memberDTO.getMemberType(), memberDTO.getPremium(), memberDTO.getCover(), memberDTO.getAddPolicyID(), memberDTO.getStatusCode())
+                return saveBeneficiary(beneficiaryDTO)
                         .then(Mono.just("next"))
                         .flatMap(msg->{
                             return Mono.just(ResponseEntity.ok(new APIResponse(200,"success",lifeAPIResponse,Instant.now())));
-                        });*/
-                return Mono.just(ResponseEntity.ok(new APIResponse(200,"success",lifeAPIResponse,Instant.now())));
+                        });
+                //return Mono.just(ResponseEntity.ok(new APIResponse(200,"success",lifeAPIResponse,Instant.now())));
             } else {
                 return Mono.just(ResponseEntity.badRequest().body(apiResponse));
             }
@@ -214,6 +220,11 @@ public class LifeInsuranceService {
                                 .header("Authorization", bearerToken)
                                 .body(BodyInserters.fromObject(formattedReq))
                                 .retrieve()
+                                .onStatus(HttpStatusCode::isError, response -> response.bodyToMono(String.class) // error body as String or other class
+                                        .flatMap(error -> {
+                                            LOG.error(error);
+                                            return Mono.error(new LifeAPIErrorException(error));
+                                        })) // throw a functional exception
                                 .toEntity(LifeAPIResponse.class).map(responseEntity -> {
                                     if (responseEntity.getStatusCode().is2xxSuccessful()) {
                                         LifeAPIResponse lifeAPIResponse = responseEntity.getBody();
@@ -230,8 +241,9 @@ public class LifeInsuranceService {
                                         return new APIResponse(400, "fail", "Failed to create dependent. Response code " + responseEntity.getStatusCode().value(), Instant.now());
                                     }
                                 }).onErrorResume(error -> {
-                                    LOG.error(MessageFormat.format("Failed to create dependent {0}", error.getMessage()));
-                                    return Mono.just(new APIResponse(400, "fail", "Failed to create dependent", Instant.now()));
+                                    LOG.error(MessageFormat.format("Failed to create dependent. {0} ", error.getMessage()));
+                                    String errorMsg = LifeAPIErrorHandler.handleLifeAPIError(error.getMessage()).isEmpty()? error.getMessage() : LifeAPIErrorHandler.handleLifeAPIError(error.getMessage());
+                                    return Mono.just(new APIResponse(400, "fail", "Failed to create dependent "+ errorMsg, Instant.now()));
                                 });
                     } else {
                         return Mono.just(new APIResponse(400, "fail", "Error creating dependent.", Instant.now()));
@@ -239,14 +251,12 @@ public class LifeInsuranceService {
                 }).flatMap(apiResponse -> {
             if (apiResponse.getStatus() == 200) {
                 LifeAPIResponse lifeAPIResponse = AppUtil.dtoToEntity(apiResponse.getData(),new LifeAPIResponse());
-                /*return saveMember(lifeAPIResponse.getPolicyNumber(), memberDTO.getClient(), memberDTO.getAgentCode(), memberDTO.getPolicyNumber(), memberDTO.getBrokerCode(), memberDTO.getTitle(), memberDTO.getFirstName(), memberDTO.getSurname(), memberDTO.getIdNumber(), memberDTO.getGender(), AppUtil.formatDate(memberDTO.getDateOfBirth()),
-                        memberDTO.getAge(), memberDTO.getCellNumber(), memberDTO.getAltCellNumber(), memberDTO.getWorkNumber(), memberDTO.getHomeNumber(), memberDTO.getEmail(), memberDTO.getFax(), memberDTO.getContactType(), memberDTO.getPostalAddress1(), memberDTO.getPostalAddress2(), memberDTO.getPostalAddress3(), memberDTO.getPostalCode(), memberDTO.getResidentialAddress1(),
-                        memberDTO.getResidentialAddress2(), memberDTO.getResidentialAddress3(), memberDTO.getResidentialCode(), memberDTO.getMemberType(), memberDTO.getPremium(), memberDTO.getCover(), memberDTO.getAddPolicyID(), memberDTO.getStatusCode())
-                        .then(Mono.just("next"))
+                return saveDependent(dependentDTO).
+                        then(Mono.just("next"))
                         .flatMap(msg->{
                             return Mono.just(ResponseEntity.ok(new APIResponse(200,"success",lifeAPIResponse,Instant.now())));
-                        });*/
-                return Mono.just(ResponseEntity.ok(new APIResponse(200,"success",lifeAPIResponse,Instant.now())));
+                        });
+               // return Mono.just(ResponseEntity.ok(new APIResponse(200,"success",lifeAPIResponse,Instant.now())));
             } else {
                 return Mono.just(ResponseEntity.badRequest().body(apiResponse));
             }
@@ -276,39 +286,46 @@ public class LifeInsuranceService {
                                 .header("Authorization", bearerToken)
                                 .body(BodyInserters.fromObject(formattedReq))
                                 .retrieve()
+                                .onStatus(HttpStatusCode::isError, response -> response.bodyToMono(String.class) // error body as String or other class
+                                        .flatMap(error -> {
+                                            LOG.error(error);
+                                            return Mono.error(new LifeAPIErrorException(error));
+                                        }))
                                 .toEntity(LifeAPIResponse.class).map(responseEntity -> {
                                     if (responseEntity.getStatusCode().is2xxSuccessful()) {
                                         LifeAPIResponse lifeAPIResponse = responseEntity.getBody();
                                         if (lifeAPIResponse != null && lifeAPIResponse.getResult()!=null && !lifeAPIResponse.getResult().toLowerCase().contains("err")) {
                                             String memberId = lifeAPIResponse != null ? String.valueOf(lifeAPIResponse.getMemberID()) : "";
-                                            LOG.error(MessageFormat.format("Member successfully created member id{0}", memberId));
+                                            LOG.error(MessageFormat.format("Extended member successfully created member id{0}", memberId));
                                             return new APIResponse(200, "success", lifeAPIResponse, Instant.now());
                                         } else {
-                                            LOG.error(MessageFormat.format("Failed to create member. Response status {0}", lifeAPIResponse.getMessage()));
-                                            return new APIResponse(400, "fail", "Failed to create member. Response " + lifeAPIResponse.getMessage(), Instant.now());
+                                            String errorMsg = "";
+                                            if(lifeAPIResponse!=null){
+                                                errorMsg=lifeAPIResponse.getMessage();
+                                            }
+                                            LOG.error(MessageFormat.format("Failed to create extended member. Response status {0}", errorMsg));
+                                            return new APIResponse(400, "fail", "Extended member could not be created. Response " + errorMsg, Instant.now());
                                         }
                                     } else {
-                                        LOG.error(MessageFormat.format("Failed to create member. Response status {0}", responseEntity.getStatusCode().value()));
-                                        return new APIResponse(400, "fail", "Failed to create member. Response code " + responseEntity.getStatusCode().value(), Instant.now());
+                                        LOG.error(MessageFormat.format("Failed to create extended member. Response status {0}", responseEntity.getStatusCode().value()));
+                                        return new APIResponse(400, "fail", "Failed to create extended member. Response code " + responseEntity.getStatusCode().value(), Instant.now());
                                     }
                                 }).onErrorResume(error -> {
-                                    LOG.error(MessageFormat.format("Failed to create member {0}", error.getMessage()));
-                                    return Mono.just(new APIResponse(400, "fail", "Failed to create member", Instant.now()));
+                                    LOG.error(MessageFormat.format("Failed to create extended member {0}", error.getMessage()));
+                                    String errorMsg = LifeAPIErrorHandler.handleLifeAPIError(error.getMessage()).isEmpty()? error.getMessage() : LifeAPIErrorHandler.handleLifeAPIError(error.getMessage());
+                                    return Mono.just(new APIResponse(400, "fail", "Failed to create member. " + errorMsg, Instant.now()));
                                 });
                     } else {
-                        return Mono.just(new APIResponse(400, "fail", "Error creating member.", Instant.now()));
+                        return Mono.just(new APIResponse(400, "fail", "Error creating extended member.", Instant.now()));
                     }
                 }).flatMap(apiResponse -> {
             if (apiResponse.getStatus() == 200) {
                 LifeAPIResponse lifeAPIResponse = AppUtil.dtoToEntity(apiResponse.getData(),new LifeAPIResponse());
-                /*return saveMember(lifeAPIResponse.getPolicyNumber(), memberDTO.getClient(), memberDTO.getAgentCode(), memberDTO.getPolicyNumber(), memberDTO.getBrokerCode(), memberDTO.getTitle(), memberDTO.getFirstName(), memberDTO.getSurname(), memberDTO.getIdNumber(), memberDTO.getGender(), AppUtil.formatDate(memberDTO.getDateOfBirth()),
-                        memberDTO.getAge(), memberDTO.getCellNumber(), memberDTO.getAltCellNumber(), memberDTO.getWorkNumber(), memberDTO.getHomeNumber(), memberDTO.getEmail(), memberDTO.getFax(), memberDTO.getContactType(), memberDTO.getPostalAddress1(), memberDTO.getPostalAddress2(), memberDTO.getPostalAddress3(), memberDTO.getPostalCode(), memberDTO.getResidentialAddress1(),
-                        memberDTO.getResidentialAddress2(), memberDTO.getResidentialAddress3(), memberDTO.getResidentialCode(), memberDTO.getMemberType(), memberDTO.getPremium(), memberDTO.getCover(), memberDTO.getAddPolicyID(), memberDTO.getStatusCode())
+                return saveExtendedDependent(extendedMemberDTO)
                         .then(Mono.just("next"))
                         .flatMap(msg->{
                             return Mono.just(ResponseEntity.ok(new APIResponse(200,"success",lifeAPIResponse,Instant.now())));
-                        });*/
-                return Mono.just(ResponseEntity.ok(new APIResponse(200,"success",lifeAPIResponse,Instant.now())));
+                        });
             } else {
                 return Mono.just(ResponseEntity.badRequest().body(apiResponse));
             }
@@ -338,6 +355,11 @@ public class LifeInsuranceService {
                                 .header("Authorization", bearerToken)
                                 .body(BodyInserters.fromObject(formattedReq))
                                 .retrieve()
+                                .onStatus(HttpStatusCode::isError, response -> response.bodyToMono(String.class) // error body as String or other class
+                                        .flatMap(error -> {
+                                            LOG.error(error);
+                                            return Mono.error(new LifeAPIErrorException(error));
+                                        }))
                                 .toEntity(LifeAPIResponse.class).map(responseEntity -> {
                                     if (responseEntity.getStatusCode().is2xxSuccessful()) {
                                         LifeAPIResponse lifeAPIResponse = responseEntity.getBody();
@@ -355,7 +377,8 @@ public class LifeInsuranceService {
                                     }
                                 }).onErrorResume(error -> {
                                     LOG.error(MessageFormat.format("Failed to create spouse {0}", error.getMessage()));
-                                    return Mono.just(new APIResponse(400, "fail", "Failed to create spouse", Instant.now()));
+                                    String errorMsg = LifeAPIErrorHandler.handleLifeAPIError(error.getMessage()).isEmpty()? error.getMessage() : LifeAPIErrorHandler.handleLifeAPIError(error.getMessage());
+                                    return Mono.just(new APIResponse(400, "fail", "Failed to create spouse. "+ errorMsg, Instant.now()));
                                 });
                     } else {
                         return Mono.just(new APIResponse(400, "fail", "Error creating spouse.", Instant.now()));
@@ -363,14 +386,11 @@ public class LifeInsuranceService {
                 }).flatMap(apiResponse -> {
             if (apiResponse.getStatus() == 200) {
                 LifeAPIResponse lifeAPIResponse = AppUtil.dtoToEntity(apiResponse.getData(),new LifeAPIResponse());
-                /*return saveMember(lifeAPIResponse.getPolicyNumber(), memberDTO.getClient(), memberDTO.getAgentCode(), memberDTO.getPolicyNumber(), memberDTO.getBrokerCode(), memberDTO.getTitle(), memberDTO.getFirstName(), memberDTO.getSurname(), memberDTO.getIdNumber(), memberDTO.getGender(), AppUtil.formatDate(memberDTO.getDateOfBirth()),
-                        memberDTO.getAge(), memberDTO.getCellNumber(), memberDTO.getAltCellNumber(), memberDTO.getWorkNumber(), memberDTO.getHomeNumber(), memberDTO.getEmail(), memberDTO.getFax(), memberDTO.getContactType(), memberDTO.getPostalAddress1(), memberDTO.getPostalAddress2(), memberDTO.getPostalAddress3(), memberDTO.getPostalCode(), memberDTO.getResidentialAddress1(),
-                        memberDTO.getResidentialAddress2(), memberDTO.getResidentialAddress3(), memberDTO.getResidentialCode(), memberDTO.getMemberType(), memberDTO.getPremium(), memberDTO.getCover(), memberDTO.getAddPolicyID(), memberDTO.getStatusCode())
-                        .then(Mono.just("next"))
+                return saveSpouse(spouseDTO).then(Mono.just("next"))
                         .flatMap(msg->{
                             return Mono.just(ResponseEntity.ok(new APIResponse(200,"success",lifeAPIResponse,Instant.now())));
-                        });*/
-                return Mono.just(ResponseEntity.ok(new APIResponse(200,"success",lifeAPIResponse,Instant.now())));
+                        });
+               // return Mono.just(ResponseEntity.ok(new APIResponse(200,"success",lifeAPIResponse,Instant.now())));
             } else {
                 return Mono.just(ResponseEntity.badRequest().body(apiResponse));
             }
@@ -400,6 +420,11 @@ public class LifeInsuranceService {
                                 .header("Authorization", bearerToken)
                                 .body(BodyInserters.fromObject(formattedReq))
                                 .retrieve()
+                                .onStatus(HttpStatusCode::isError, response -> response.bodyToMono(String.class) // error body as String or other class
+                                        .flatMap(error -> {
+                                            LOG.error(error);
+                                            return Mono.error(new LifeAPIErrorException(error));
+                                        }))
                                 .toEntity(LifeAPIResponse.class).map(responseEntity -> {
                                     if (responseEntity.getStatusCode().is2xxSuccessful()) {
                                         LifeAPIResponse lifeAPIResponse = responseEntity.getBody();
@@ -412,27 +437,25 @@ public class LifeInsuranceService {
                                             return new APIResponse(400, "fail", "Failed to create member. Response " + lifeAPIResponse.getMessage(), Instant.now());
                                         }
                                     } else {
-                                        LOG.error(MessageFormat.format("Failed to create member. Response status {0}", responseEntity.getStatusCode().value()));
-                                        return new APIResponse(400, "fail", "Failed to create member. Response code " + responseEntity.getStatusCode().value(), Instant.now());
+                                        LOG.error(MessageFormat.format("Failed to add bank details. Response status {0}", responseEntity.getStatusCode().value()));
+                                        return new APIResponse(400, "fail", "Failed to add bank details. Response code " + responseEntity.getStatusCode().value(), Instant.now());
                                     }
                                 }).onErrorResume(error -> {
-                                    LOG.error(MessageFormat.format("Failed to create member {0}", error.getMessage()));
-                                    return Mono.just(new APIResponse(400, "fail", "Failed to create member", Instant.now()));
+                                    LOG.error(MessageFormat.format("Failed to add bank details {0}", error.getMessage()));
+                                    String errorMsg = LifeAPIErrorHandler.handleLifeAPIError(error.getMessage()).isEmpty()? error.getMessage() : LifeAPIErrorHandler.handleLifeAPIError(error.getMessage());
+                                    return Mono.just(new APIResponse(400, "fail", "Failed to add bank details. " + errorMsg, Instant.now()));
                                 });
                     } else {
-                        return Mono.just(new APIResponse(400, "fail", "Error creating member.", Instant.now()));
+                        return Mono.just(new APIResponse(400, "fail", "Error adding bank details.", Instant.now()));
                     }
                 }).flatMap(apiResponse -> {
             if (apiResponse.getStatus() == 200) {
                 LifeAPIResponse lifeAPIResponse = AppUtil.dtoToEntity(apiResponse.getData(),new LifeAPIResponse());
-                /*return saveMember(lifeAPIResponse.getPolicyNumber(), memberDTO.getClient(), memberDTO.getAgentCode(), memberDTO.getPolicyNumber(), memberDTO.getBrokerCode(), memberDTO.getTitle(), memberDTO.getFirstName(), memberDTO.getSurname(), memberDTO.getIdNumber(), memberDTO.getGender(), AppUtil.formatDate(memberDTO.getDateOfBirth()),
-                        memberDTO.getAge(), memberDTO.getCellNumber(), memberDTO.getAltCellNumber(), memberDTO.getWorkNumber(), memberDTO.getHomeNumber(), memberDTO.getEmail(), memberDTO.getFax(), memberDTO.getContactType(), memberDTO.getPostalAddress1(), memberDTO.getPostalAddress2(), memberDTO.getPostalAddress3(), memberDTO.getPostalCode(), memberDTO.getResidentialAddress1(),
-                        memberDTO.getResidentialAddress2(), memberDTO.getResidentialAddress3(), memberDTO.getResidentialCode(), memberDTO.getMemberType(), memberDTO.getPremium(), memberDTO.getCover(), memberDTO.getAddPolicyID(), memberDTO.getStatusCode())
-                        .then(Mono.just("next"))
+                return saveBankDetails(bankDetailsDTO).then(Mono.just("next"))
                         .flatMap(msg->{
                             return Mono.just(ResponseEntity.ok(new APIResponse(200,"success",lifeAPIResponse,Instant.now())));
-                        });*/
-                return Mono.just(ResponseEntity.ok(new APIResponse(200,"success",lifeAPIResponse,Instant.now())));
+                        });
+               // return Mono.just(ResponseEntity.ok(new APIResponse(200,"success",lifeAPIResponse,Instant.now())));
             } else {
                 return Mono.just(ResponseEntity.badRequest().body(apiResponse));
             }
@@ -483,12 +506,12 @@ public class LifeInsuranceService {
         });
     }
 
-    Mono<String> saveMember(String pol360RefId, String client, String agentCode, String policyNumber, String brokerCode, String title, String firstName, String surname, String idNUmber, String gender, LocalDate dateOfBirth, String age, String cellNumber, String altCellNumber, String workNumber, String homeNumber, String email, String fax, String contactType, String postalAddress1, String postalAddress2, String postalAddress3, String postalCode, String residentialAddress1, String residentialAddress2, String residentialAddress3, String residentialCode, String memberType, String premium, String cover, String addPolicyId, String statusCode) {
-        return lifeInsuranceRepository.saveMember(pol360RefId, client, agentCode, policyNumber, brokerCode, title, firstName, surname, idNUmber, gender, dateOfBirth, age, cellNumber, altCellNumber, workNumber, homeNumber, email, fax, contactType, postalAddress1, postalAddress2,
-                        postalAddress3, postalCode, residentialAddress1, residentialAddress2, residentialAddress3, residentialCode, memberType, premium, cover, addPolicyId, statusCode
+    Mono<String> saveMember(Member memberDTO) {
+        return lifeInsuranceRepository.saveMember(memberDTO.getPolicyNumber(), memberDTO.getClient(),memberDTO.getAgentCode(), memberDTO.getPolicyNumber(), memberDTO.getBrokerCode(), memberDTO.getTitle(), memberDTO.getFirstName(), memberDTO.getSurname(),memberDTO.getIdNumber(), memberDTO.getGender(),AppUtil.formatDate(memberDTO.getDateOfBirth()),memberDTO.getAge(),memberDTO.getCellNumber(),memberDTO.getAltCellNumber(),memberDTO.getWorkNumber(), memberDTO.getHomeNumber(), memberDTO.getEmail(), memberDTO.getFax(), memberDTO.getContactType(),memberDTO.getPostalAddress1(),memberDTO.getPostalAddress2(),
+                        memberDTO.getPostalAddress3(), memberDTO.getPostalCode(), memberDTO.getResidentialAddress1(), memberDTO.getResidentialAddress2(), memberDTO.getResidentialAddress3(), memberDTO.getResidentialCode(), memberDTO.getMemberType(), memberDTO.getPremium(), memberDTO.getCover(), memberDTO.getAddPolicyID(), memberDTO.getStatusCode()
                 ).then(Mono.just("next"))
                 .flatMap(msg -> {
-                    LOG.info(MessageFormat.format("Completed saving member details {0}", pol360RefId));
+                    LOG.info(MessageFormat.format("Completed saving member details {0}", memberDTO.getPolicyNumber()));
                     return Mono.just("Member details successfully saved");
                 }).onErrorResume(err -> {
                     LOG.error(MessageFormat.format("Failed to save member details. Error {0}", err.getMessage()));
@@ -496,11 +519,11 @@ public class LifeInsuranceService {
                 });
     }
 
-    Mono<ResponseEntity<APIResponse>> saveSpouse(String client, String title, String firstName, String surname, String idNumber, String gender, LocalDate dateOfBirth, String age, String mainMemberId, String policyNumber) {
-        return lifeInsuranceRepository.saveSpouse(client, title, firstName, surname, idNumber, gender, dateOfBirth, age, mainMemberId, policyNumber)
+    Mono<ResponseEntity<APIResponse>> saveSpouse(Spouse spouseDTO) {
+        return lifeInsuranceRepository.saveSpouse(spouseDTO.getClient(), spouseDTO.getTitle(),spouseDTO.getFirstName(), spouseDTO.getSurname(), spouseDTO.getIdNumber(), spouseDTO.getGender(),AppUtil.formatDate(spouseDTO.getDateOfBirth()), spouseDTO.getAge(), spouseDTO.getMainMemberID(), spouseDTO.getPolicyNumber())
                 .then(Mono.just("next"))
                 .flatMap(msg -> {
-                    LOG.info(MessageFormat.format("Completed saving spouse details {0}", mainMemberId));
+                    LOG.info(MessageFormat.format("Completed saving spouse details {0}", spouseDTO.getMainMemberID()));
                     return Mono.just(ResponseEntity.ok().body(new APIResponse(200, "success", "Spouse details successfully saved", Instant.now())));
                 }).onErrorResume(err -> {
                     LOG.error(MessageFormat.format("Failed to save spouse details. Error {0}", err.getMessage()));
@@ -509,12 +532,11 @@ public class LifeInsuranceService {
 
     }
 
-
-    Mono<ResponseEntity<APIResponse>> saveExtendedDependent(String client, String title, String firstName, String surname, String idNumber, String gender, LocalDate dateOfBirth, String age, String mainMemberId, String policyNumber) {
-        return lifeInsuranceRepository.saveExtendedDependent(client, title, firstName, surname, idNumber, gender, dateOfBirth, age, mainMemberId, policyNumber)
+    Mono<ResponseEntity<APIResponse>> saveExtendedDependent(ExtendedMember extendedMemberDto) {
+        return lifeInsuranceRepository.saveExtendedDependent(extendedMemberDto.getClient(),extendedMemberDto.getTitle(),extendedMemberDto.getFirstName(), extendedMemberDto.getSurname(), extendedMemberDto.getIdNumber(), extendedMemberDto.getGender(), AppUtil.formatDate(extendedMemberDto.getDateOfBirth()), extendedMemberDto.getAge(), extendedMemberDto.getMainMemberID(), extendedMemberDto.getPolicyNumber())
                 .then(Mono.just("next"))
                 .flatMap(msg -> {
-                    LOG.info(MessageFormat.format("Completed saving external dependent details {0}", mainMemberId));
+                    LOG.info(MessageFormat.format("Completed saving external dependent details {0}", extendedMemberDto.getMainMemberID()));
                     return Mono.just(ResponseEntity.ok().body(new APIResponse(200, "success", "External member details successfully saved", Instant.now())));
                 }).onErrorResume(err -> {
                     LOG.error(MessageFormat.format("Failed to save external member details. Error {0}", err.getMessage()));
@@ -522,11 +544,11 @@ public class LifeInsuranceService {
                 });
     }
 
-    Mono<ResponseEntity<APIResponse>> saveDependent(String client, String title, String firstName, String surname, String idNumber, String gender, LocalDate dateOfBirth, String age, String mainMemberId, String policyNumber) {
-        return lifeInsuranceRepository.saveDependent(client, title, firstName, surname, idNumber, gender, dateOfBirth, age, mainMemberId, policyNumber)
+    Mono<ResponseEntity<APIResponse>> saveDependent(Dependent dependentDTO) {
+        return lifeInsuranceRepository.saveDependent(dependentDTO.getClient(), dependentDTO.getTitle(), dependentDTO.getFirstName(), dependentDTO.getSurname(), dependentDTO.getIdNumber(), dependentDTO.getGender(),AppUtil.formatDate(dependentDTO.getDateOfBirth()), dependentDTO.getAge(), dependentDTO.getMainMemberID(), dependentDTO.getPolicyNumber())
                 .then(Mono.just("next"))
                 .flatMap(msg -> {
-                    LOG.info(MessageFormat.format("Completed saving dependent details {0}", mainMemberId));
+                    LOG.info(MessageFormat.format("Completed saving dependent details {0}", dependentDTO));
                     return Mono.just(ResponseEntity.ok().body(new APIResponse(200, "success", "Dependent details successfully saved", Instant.now())));
                 }).onErrorResume(err -> {
                     LOG.error(MessageFormat.format("Failed to save dependent details. Error {0}", err.getMessage()));
@@ -534,11 +556,11 @@ public class LifeInsuranceService {
                 });
     }
 
-    Mono<ResponseEntity<APIResponse>> saveBeneficiary(String policyNumber, String client, String contactCell, String contactWorkTell, String contactHomeTell, String contactFax, String contactEmail, String sessionUserID, String prefType, String benLastName, String benFirstName, String benIdNumber, String benPercentage, LocalDate benDOB, String benRelation, String benType, String title) {
-        return lifeInsuranceRepository.saveBeneficiary(policyNumber, client, contactCell, contactWorkTell, contactHomeTell, contactFax, contactEmail, sessionUserID, prefType, benLastName, benFirstName, benIdNumber, benPercentage, benDOB, benRelation, benType, title)
+    Mono<ResponseEntity<APIResponse>> saveBeneficiary(Beneficiary beneficiaryDTO) {
+        return lifeInsuranceRepository.saveBeneficiary(beneficiaryDTO.getPolicyNumber(), beneficiaryDTO.getClient(), beneficiaryDTO.getContactCell(), beneficiaryDTO.getContactWorkTell(), beneficiaryDTO.getContactHomeTell(), beneficiaryDTO.getContactFax(), beneficiaryDTO.getContactEmail(), beneficiaryDTO.getSessionUserID(), beneficiaryDTO.getPrefType(), beneficiaryDTO.getBenLastName(), beneficiaryDTO.getBenFirstName(), beneficiaryDTO.getBenIDNumber(), beneficiaryDTO.getBenPercentage(), AppUtil.formatDate(beneficiaryDTO.getBenDOB()), beneficiaryDTO.getBenRelation(), beneficiaryDTO.getBenType(), beneficiaryDTO.getTitle())
                 .then(Mono.just("next"))
                 .flatMap(msg -> {
-                    LOG.info(MessageFormat.format("Completed saving beneficiary details {0}", policyNumber));
+                    LOG.info(MessageFormat.format("Completed saving beneficiary details {0}", beneficiaryDTO.getBenIDNumber()));
                     return Mono.just(ResponseEntity.ok().body(new APIResponse(200, "success", "Beneficiary details successfully saved", Instant.now())));
                 }).onErrorResume(err -> {
                     LOG.error(MessageFormat.format("Failed to save beneficiary details. Error {0}", err.getMessage()));
@@ -546,11 +568,11 @@ public class LifeInsuranceService {
                 });
     }
 
-    Mono<ResponseEntity<APIResponse>> saveBankDetails(String client, String policyNumber, String sessionUserID, String branchCode, String accNumber, String accType, String accName, String dedDay, LocalDate fromDate, String idNumber, String subNaedo) {
-        return lifeInsuranceRepository.saveBankDetails(client, policyNumber, sessionUserID, branchCode, accNumber, accType, accName, dedDay, fromDate, idNumber, subNaedo)
+    Mono<ResponseEntity<APIResponse>> saveBankDetails(BankDetails bankDetailsDTO) {
+        return lifeInsuranceRepository.saveBankDetails(bankDetailsDTO.getClient(), bankDetailsDTO.getPolicyNumber(), bankDetailsDTO.getSessionUserID(), bankDetailsDTO.getBranchCode(), bankDetailsDTO.getAccNumber(), bankDetailsDTO.getAccType(), bankDetailsDTO.getAccName(), bankDetailsDTO.getDedDay(),bankDetailsDTO.getFromDate(), bankDetailsDTO.getIdNumber(), bankDetailsDTO.getSubNaedo())
                 .then(Mono.just("next"))
                 .flatMap(msg -> {
-                    LOG.info(MessageFormat.format("Completed saving bank details details {0}", policyNumber));
+                    LOG.info(MessageFormat.format("Completed saving bank details details {0}", bankDetailsDTO.getIdNumber()));
                     return Mono.just(ResponseEntity.ok().body(new APIResponse(200, "success", "Bank details successfully saved", Instant.now())));
                 }).onErrorResume(err -> {
                     LOG.error(MessageFormat.format("Failed to save bank details. Error {0}", err.getMessage()));

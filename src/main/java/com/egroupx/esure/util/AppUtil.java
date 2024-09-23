@@ -32,7 +32,7 @@ public class AppUtil {
                 }
                 if (strDate.contains("-")) {
 
-                    Date date1 = new SimpleDateFormat("dd-MM-yyyy").parse(strDate.substring(0, 11));
+                    Date date1 = new SimpleDateFormat("dd-MM-yyyy").parse(strDate.substring(0, 10));
                     date = date1.toInstant().atZone(ZoneId.systemDefault()).toLocalDate();
                 }
                 return date;

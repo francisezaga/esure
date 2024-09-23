@@ -54,15 +54,15 @@ public class Beneficiary {
     private String benPercentage;
     @JsonAlias("benDOB")
     @JsonProperty("BenDOB")
-    private LocalDate benDOB;
+    private String benDOB;
     @JsonAlias("benRelation")
     @JsonProperty("BenRelation")
     private String benRelation;
     @JsonAlias("benType")
-    @JsonProperty("BeneficiaryType;")
+    @JsonProperty("BeneficiaryType")
     private String benType;
     @JsonAlias("title")
-    @JsonProperty("title")
+    @JsonProperty("Title")
     private String title;
     @JsonAlias("function")
     @JsonProperty("Function")

@@ -33,7 +33,7 @@ public class ExtendedMember {
     private String gender;
     @JsonAlias("dateOfBirth")
     @JsonProperty("DateOfBirth")
-    private LocalDate dateOfBirth;
+    private String dateOfBirth;
     @JsonAlias("age")
     @JsonProperty("Age")
     private String age;
