@@ -220,10 +220,10 @@ public class KYCVerificationService {
         return personalDetailsDTO;
     }
 
-    public Mono<ResponseEntity<APIResponse>> verifyPersonalDetailsForLifeCover(String idNumber) {
+    public Mono<ResponseEntity<APIResponse>> verifyPersonalDetailsForLifeCover(Long memberId) {
 
-        LOG.info(idNumber);
-        return lifeInsuranceRepository.findMemberLastRecordByIdNumber(idNumber)
+        LOG.info(String.valueOf(memberId));
+        return lifeInsuranceRepository.findMemberLastRecordByMainMemberNumber(memberId)
                 .flatMap(personalDetails -> {
                     String idType =(personalDetails.getTypeOfId()!=null && (personalDetails.getTypeOfId().equalsIgnoreCase("id") || personalDetails.getTypeOfId().equalsIgnoreCase("1")))?"id":"passport";
                     PersonalDetailsDTO personalDetailsDTO = new PersonalDetailsDTO();
@@ -238,7 +238,7 @@ public class KYCVerificationService {
                     nameScanReq.setFirstName(personalDetailsDTO.getFirstName());
                     nameScanReq.setLastName(personalDetails.getSurname());
 
-                    LOG.info(MessageFormat.format("Verifying name scan personal details for user member {0}", idNumber));
+                    LOG.info(MessageFormat.format("Verifying name scan personal details for user member {0}", memberId));
                     return nameScanVerification(nameScanReq).flatMap(nameScanRes -> {
                         int nameScanResCode = nameScanRes.getStatus();
 
@@ -266,10 +266,10 @@ public class KYCVerificationService {
                                                 }
 
                                                 return switch (rsaIDVerResCode) {
-                                                    case 200 -> updateMemberKYCDetails(idNumber,isNameScanPass,nameScanFailReason,isKycIdVerified,kycIdVerFailReason,personalDetails.getId());
+                                                    case 200 -> updateMemberKYCDetails(personalDetails.getIdNumber(), isNameScanPass,nameScanFailReason,isKycIdVerified,kycIdVerFailReason,personalDetails.getId());
                                                     case 400 -> Mono.just(ResponseEntity.badRequest().body(idCheckRes));
                                                     //default -> Mono.just(ResponseEntity.internalServerError().body(idCheckRes));
-                                                    default-> updateMemberKYCDetails(idNumber,isNameScanPass,nameScanFailReason,isKycIdVerified,kycIdVerFailReason,personalDetails.getId());
+                                                    default-> updateMemberKYCDetails(personalDetails.getIdNumber(), isNameScanPass,nameScanFailReason,isKycIdVerified,kycIdVerFailReason,personalDetails.getId());
 
                                                 };
                                             }
@@ -284,7 +284,7 @@ public class KYCVerificationService {
                                     }
                                     boolean isKycIdVerified=false;
                                     String kycIdVerFailReason="";
-                                    yield updateMemberKYCDetails(idNumber,isNameScanPass,nameScanFailReason,isKycIdVerified,kycIdVerFailReason,personalDetails.getId());
+                                    yield updateMemberKYCDetails(personalDetails.getIdNumber(), isNameScanPass,nameScanFailReason,isKycIdVerified,kycIdVerFailReason,personalDetails.getId());
                                 }
                             }
                             case 400 -> Mono.just(ResponseEntity.badRequest().body(nameScanRes));
@@ -294,11 +294,11 @@ public class KYCVerificationService {
 
                 })
                 .switchIfEmpty(Mono.defer(() -> {
-                    LOG.error(MessageFormat.format("User {0} not found ", idNumber));
+                    LOG.error(MessageFormat.format("User {0} not found ", memberId));
                     return Mono.just(ResponseEntity.badRequest().body(new APIResponse(400, "Request failed", "User not found. Please try again", Instant.now())));
                 }))
                 .onErrorResume(error -> {
-                    LOG.error(MessageFormat.format("Error checking user {0} {1}", idNumber, error.getMessage()));
+                    LOG.error(MessageFormat.format("Error checking user {0} {1}", memberId, error.getMessage()));
                     return Mono.just(ResponseEntity.internalServerError().body(new APIResponse(500, "Request failed", "Error checking user. Please try again", Instant.now())));
                 });
 

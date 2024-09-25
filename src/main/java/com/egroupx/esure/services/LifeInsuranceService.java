@@ -718,13 +718,13 @@ public class LifeInsuranceService {
                 });
     }
 
-    public Mono<ResponseEntity<APIResponse>> getMemberStep(String idNumber) {
-        return lifeInsuranceRepository.findMemberLastRecordStepByIdNumber(idNumber)
+    public Mono<ResponseEntity<APIResponse>> getMemberStep(Long memberId) {
+        return lifeInsuranceRepository.findMemberLastRecordStepByIdNumber(memberId)
                 .flatMap(memberStep -> {
-                    LOG.info(MessageFormat.format("Completed retrieving member step details {0}", idNumber));
+                    LOG.info(MessageFormat.format("Completed retrieving member step details {0}", memberId));
                     return Mono.just(ResponseEntity.ok().body(new APIResponse(200, "success", memberStep, Instant.now())));
                 }).switchIfEmpty(Mono.defer(() -> {
-                    LOG.error(MessageFormat.format("User {0} not found ", idNumber));
+                    LOG.error(MessageFormat.format("User {0} not found ", memberId));
                     return Mono.just(ResponseEntity.badRequest().body(new APIResponse(400, "Request failed", null, Instant.now())));
                 }))
                 .onErrorResume(err -> {

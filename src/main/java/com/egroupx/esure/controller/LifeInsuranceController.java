@@ -62,13 +62,13 @@ public class LifeInsuranceController {
         });
     }
 
-    @GetMapping(value = {"/getMemberStep/{idNumber}"})
-    public Mono<ResponseEntity<APIResponse>> geMemberStep(@PathVariable String idNumber)  {
-        return lifeInsuranceService.getMemberStep(idNumber);
+    @GetMapping(value = {"/getMemberStep/{memberId}"})
+    public Mono<ResponseEntity<APIResponse>> geMemberStep(@PathVariable Long memberId)  {
+        return lifeInsuranceService.getMemberStep(memberId);
     }
 
-    @PostMapping(value = {"/submitMemberDetails/{idNumber}"})
-    public Mono<ResponseEntity<APIResponse>> submitMemberDetails(@PathVariable String idNumber)  {
-        return kycVerificationService.verifyPersonalDetailsForLifeCover(idNumber);
+    @PostMapping(value = {"/submitMemberDetails/{memberId}"})
+    public Mono<ResponseEntity<APIResponse>> submitMemberDetails(@PathVariable Long memberId)  {
+        return kycVerificationService.verifyPersonalDetailsForLifeCover(memberId);
     }
 }

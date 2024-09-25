@@ -34,11 +34,14 @@ public interface LifeInsuranceRepository extends ReactiveCrudRepository<MemberDT
     @Query("SELECT * FROM members WHERE id_number=:idNumber")
     Flux<Member> findMemberByIdNumber(String idNumber);
 
+    @Query("SELECT * FROM esure_members WHERE pol_360_main_member_id=:memberId order by id desc limit 1")
+    Mono<Member> findMemberLastRecordByMainMemberNumber(Long memberId);
+
     @Query("SELECT * FROM esure_members WHERE id_number=:idNumber order by id desc limit 1")
     Mono<Member> findMemberLastRecordByIdNumber(String idNumber);
 
-    @Query("SELECT id,pol_360_main_member_id,id_number,step FROM esure_members WHERE id_number=:idNumber order by id desc limit 1")
-    Mono<MemberStep> findMemberLastRecordStepByIdNumber(String idNumber);
+    @Query("SELECT id,pol_360_main_member_id,id_number,step FROM esure_members WHERE pol_360_main_member_id=:memberId order by id desc limit 1")
+    Mono<MemberStep> findMemberLastRecordStepByIdNumber(Long memberId);
 
     @Query("UPDATE esure_members SET name_space_scan_pass=:nameSpaceScanPass, name_space_scan_fail_reason=:nameSpaceScanFailReason, id_verification_pass=:idVerificationPass,id_verification_fail_reason=:idVerificationFailReason WHERE id=:id")
     Mono<Member> updateMemberKycDetails(boolean nameSpaceScanPass,String nameSpaceScanFailReason, boolean idVerificationPass,String idVerificationFailReason,Long id);
