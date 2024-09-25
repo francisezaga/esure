@@ -12,9 +12,9 @@ import reactor.core.publisher.Mono;
 @Repository
 public interface AllRisksRepository extends ReactiveCrudRepository<AllRisks,Long> {
 
-    @Query("INSERT IGNORE INTO all_risks SET fsp_quote_ref_id=:fspQouteRefId,item_description=:itemDescription,sum_insured=:sumInsured,cover_type_id=:coverTypeId")
+    @Query("INSERT IGNORE INTO esure_all_risks SET fsp_quote_ref_id=:fspQouteRefId,item_description=:itemDescription,sum_insured=:sumInsured,cover_type_id=:coverTypeId")
     Mono<AllRisks> saveAllRisksDetails(Long fspQouteRefId,String itemDescription,String sumInsured,String coverTypeId);
 
-    @Query("select * from all_risks where fsp_quote_ref_id=:fspQuoteRef")
+    @Query("select * from esure_all_risks where fsp_quote_ref_id=:fspQuoteRef")
     Flux<AllRisks> getAllRisksByQuoteRefId(Long fspQuoteRef);
 }

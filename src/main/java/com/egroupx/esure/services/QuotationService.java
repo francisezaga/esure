@@ -30,10 +30,10 @@ import java.util.*;
 @Service
 public class QuotationService {
 
-    @Value("${egroupx.services.fspEndpointUrl}")
+    @Value("${egroupx.services.fsp.endpointUrl}")
     private String fspEndpointUrl;
 
-    @Value("${egroupx.services.fspAPIKey}")
+    @Value("${egroupx.services.fsp.apiKey}")
     private String fspAPIKey;
 
     private WebClient webClient;
@@ -44,7 +44,7 @@ public class QuotationService {
 
     private final Logger LOG = LoggerFactory.getLogger(CustomerService.class);
 
-    public QuotationService(CustomerService customerService, HomeInsuranceService homeInsuranceService, VehicleInsuranceService vehicleInsuranceService, EmailService emailService, CustomerRepository customerRepository) {
+    public QuotationService(CustomerService customerService, HomeInsuranceService homeInsuranceService, VehicleInsuranceService vehicleInsuranceService,CustomerRepository customerRepository) {
         this.customerService = customerService;
         this.homeInsuranceService = homeInsuranceService;
         this.vehicleInsuranceService = vehicleInsuranceService;

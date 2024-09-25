@@ -25,10 +25,10 @@ import java.util.Base64;
 @Service
 public class VehicleInsuranceService {
 
-    @Value("${egroupx.services.fspEndpointUrl}")
+    @Value("${egroupx.services.fsp.endpointUrl}")
     private String fspEndpointUrl;
 
-    @Value("${egroupx.services.fspAPIKey:}")
+    @Value("${egroupx.services.fsp.apiKey:}")
     private String fspAPIKey;
 
     private WebClient webClient;

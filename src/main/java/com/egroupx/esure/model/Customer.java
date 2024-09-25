@@ -25,4 +25,5 @@ public class Customer {
     private String maritalStatusCd;
     private String idType;
     private String passportNumber;
+    private String step;
 }

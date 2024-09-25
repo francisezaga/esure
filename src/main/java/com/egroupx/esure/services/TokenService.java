@@ -1,5 +1,6 @@
 package com.egroupx.esure.services;
 
+import com.egroupx.esure.dto.auth.Token;
 import com.egroupx.esure.model.responses.life.TokenResponse;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -18,30 +19,37 @@ import java.util.UUID;
 @Service
 public class TokenService {
 
-    @Value("${egroupx.services.pol360EndpointUrl}")
+    @Value("${egroupx.services.marisit.url}")
+    private String maristUrlPost;
+    @Value("${egroupx.services.marisit.username}")
+    private String user;
+    @Value("${egroupx.services.marisit.password}")
+    private String password;
+
+    @Value("${egroupx.services.pol360.endpointUrl}")
     private String pol360EndpointUrl;
 
-    @Value("${egroupx.services.pol360TokenGenClientName}")
+    @Value("${egroupx.services.pol360.tokenGenClientName}")
     private String pol360TokenGenClientName;
 
-    @Value("${egroupx.services.pol360TokenUUID}")
+    @Value("${egroupx.services.pol360.tokenUUID}")
     private String pol360TokenUUID;
 
     private final Logger LOG = LoggerFactory.getLogger(TokenService.class);
 
     private WebClient webClientPost;
 
-    private void setConfigs(){
+    private void setConfigs(String endpointBaseUrl){
 
         this.webClientPost = WebClient.builder()
-                .baseUrl(pol360EndpointUrl)
+                .baseUrl(endpointBaseUrl)
                 .defaultHeader("Accept", MediaType.APPLICATION_JSON_VALUE,
                         "Content-Type", MediaType.APPLICATION_JSON_VALUE)
                 .build();
     }
 
     public Mono<String> getPol360APIToken(){
-        setConfigs();
+        setConfigs(pol360EndpointUrl);
         return webClientPost.get()
                 .uri("/api/360APITEST.php?Function=GenerateAuthToken&ClientName="+pol360TokenGenClientName)
                 .header(HttpHeaders.ACCEPT, "*/*")
@@ -62,5 +70,29 @@ public class TokenService {
                     LOG.error(MessageFormat.format("Error getting token api token. Error {0}",error.getMessage()));
                     return Mono.just("");
                 });
+    }
+
+    public Mono<String> getMaristToken(){
+        setConfigs(maristUrlPost);
+        Token tokenReq = new Token();
+        tokenReq.setUsername(this.user);
+        tokenReq.setPassword(this.password);
+        return webClientPost.post()
+                .uri("api/v6/login")
+                .bodyValue(tokenReq)
+                .retrieve()
+                .toEntity(String.class).map(responseEntity -> {
+                    if (responseEntity.getStatusCode().is2xxSuccessful()) {
+                        String token = responseEntity.getBody();
+                        return token.replaceAll("\"","");
+                    } else {
+                        return "";
+                    }
+                });
+    }
+
+    public Mono<String> getCitizenAPIToken(){
+        // return iTokenRepository.findCitizenAPIToken();
+        return Mono.just("");
     }
 }

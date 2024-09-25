@@ -32,10 +32,10 @@ import java.util.Base64;
 @Service
 public class PolicyService {
 
-    @Value("${egroupx.services.fspEndpointUrl}")
+    @Value("${egroupx.services.fsp.endpointUrl}")
     private String fspEndpointUrl;
 
-    @Value("${egroupx.services.fspAPIKey:}")
+    @Value("${egroupx.services.fsp.apiKey:}")
     private String fspAPIKey;
 
     @Value("${egroupx.email.sendEmail}")
@@ -192,6 +192,11 @@ public class PolicyService {
             if (policy != null) {
                 if (policy.getPolicyHolders() != null && policy.getPolicyHolders().length > 0 && policy.getPolicyHolders()[0].getPerson() != null) {
                     idNumber = policy.getPolicyHolders()[0].getPerson().getIdNumber();
+                }
+                if(idNumber==null || idNumber.isEmpty()){
+                    if (policy.getPolicyHolders() != null && policy.getPolicyHolders().length > 0 && policy.getPolicyHolders()[0].getPerson() != null){
+                        idNumber = policy.getPolicyHolders()[0].getPerson().getPassportNumber();
+                    }
                 }
 
                 return savePolicy(policyId, AppUtil.stringToLong(policy.getInsurerId()), AppUtil.stringToInteger(policy.getCategoryId()), policy.getDateQuoted(), "ACCEPTED", AppUtil.stringToLong(policy.getBrokerCode()), policy.getExternalPolicyNo(), AppUtil.stringToLong(policy.getQuotationId()), AppUtil.stringToDouble(policy.getQuotePremium()), AppUtil.stringToLong(policy.getOfferingId()), policy.getOfferingName(), policy.getErrorStatus(), idNumber, esureStatus, AppUtil.stringToLong(policy.getQuotationId()), policyReq).

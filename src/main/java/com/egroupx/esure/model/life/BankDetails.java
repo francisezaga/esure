@@ -13,41 +13,16 @@ import java.time.LocalDate;
 @AllArgsConstructor
 public class BankDetails {
 
-    @JsonAlias("client")
-    @JsonProperty("Client")
     private String client;
-    @JsonAlias("policyNumber")
-    @JsonProperty("PolicyNumber")
     private String policyNumber;
-    @JsonAlias("sessionUserId")
-    @JsonProperty("SessionUserID")
     private String sessionUserID;
-    @JsonAlias("branchCode")
-    @JsonProperty("BranchCode")
     private String branchCode;
-    @JsonAlias("accNumber")
-    @JsonProperty("AccNumber")
     private String accNumber;
-    @JsonAlias("accType")
-    @JsonProperty("AccType")
     private String accType;
-    @JsonAlias("accName")
-    @JsonProperty("AccName")
     private String accName;
-    @JsonAlias("dedDay")
-    @JsonProperty("DedDay")
     private String dedDay;
-    @JsonAlias("fromDate")
-    @JsonProperty("fromDate")
     private LocalDate fromDate;
-    @JsonAlias("idNumber")
-    @JsonProperty("IDNumber")
     private String idNumber;
-    @JsonAlias("subNaedo")
-    @JsonProperty("SubNaedo")
     private String subNaedo;
-    @JsonAlias("function")
-    @JsonProperty("Function")
-    private String function;
 
 }

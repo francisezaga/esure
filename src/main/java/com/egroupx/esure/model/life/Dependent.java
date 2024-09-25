@@ -13,37 +13,15 @@ import java.time.LocalDate;
 @AllArgsConstructor
 public class Dependent {
 
-    @JsonAlias("client")
-    @JsonProperty("Client")
     private String client;
-    @JsonAlias("title")
-    @JsonProperty("Title")
     private String title;
-    @JsonAlias("firstName")
-    @JsonProperty("FirstName")
     private String firstName;
-    @JsonAlias("surname")
-    @JsonProperty("Surname")
     private String surname;
-    @JsonAlias("idNumber")
-    @JsonProperty("IDNumber")
     private String idNumber;
-    @JsonAlias("gender")
-    @JsonProperty("Gender")
     private String gender;
-    @JsonAlias("dateOfBirth")
-    @JsonProperty("DateOfBirth")
-    private String dateOfBirth;
-    @JsonAlias("age")
-    @JsonProperty("Age")
+    private LocalDate dateOfBirth;
     private String age;
-    @JsonAlias("mainMemberId")
-    @JsonProperty("MainMemberID")
     private String mainMemberID;
-    @JsonAlias("policyNumber")
-    @JsonProperty("PolicyNumber")
     private String policyNumber;
-    @JsonAlias("function")
-    @JsonProperty("Function")
-    private String function;
+
 }

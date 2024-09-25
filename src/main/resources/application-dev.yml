@@ -49,16 +49,33 @@ logging:
 
 egroupx:
   services:
-    fspEndpointUrl: https://test.fspsolutions.com
-    fspAPIKey: 1Am}@vdV0mJV[J4vL=k?!e+H~3=].NP2
+    fsp:
+      endpointUrl: https://test.fspsolutions.com
+      apiKey: 1Am}@vdV0mJV[J4vL=k?!e+H~3=].NP2
 
-    pol360EndpointUrl: https://web02.pol360.co.za
-    pol360TokenGenClientName: RoyaleCrownsFinancialServices
-    pol360TokenUUID: 9eab086c-0dc1-4e5e-8f46-6b8e6e2a3656
-    pol360UserName: damien@pol360.co.za
-    pol360Password: 360API$360#
+    pol360:
+      endpointUrl: https://web02.pol360.co.za
+      tokenGenClientName: RoyaleCrownsFinancialServices
+      tokenUUID: 9eab086c-0dc1-4e5e-8f46-6b8e6e2a3656
+      userName: damien@pol360.co.za
+      password: 360API$360#
 
-    urlSMSEndpoint: http://102.131.60.77:8088/api/sms
+    namescan:
+      url: https://api.namescan.io/v3
+      apiKey: 06A85DBCDCAD492B80FC3E1C18FAB4C2
+
+    marisit:
+      url: https://online.marisit.co.za
+      username: jm980514uts
+      password: JOsh078112$%&
+
+    securecitizen:
+      url: https://citizenapi.securecitizen.cloud/Citizen
+
+    otpSMS:
+      endpoint: http://102.131.60.77:8088
+
+
 
   email:
     host: mail.ezaga.co.za

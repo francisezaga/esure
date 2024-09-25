@@ -1,7 +1,6 @@
 package com.egroupx.esure.services;
 
 import com.egroupx.esure.dto.auth.SMSDTO;
-import com.egroupx.esure.model.auth.OTP;
 import com.egroupx.esure.model.responses.api.APIResponse;
 import com.egroupx.esure.repository.AuthRepository;
 import org.slf4j.Logger;
@@ -25,12 +24,12 @@ import java.time.temporal.TemporalUnit;
 @Service
 public class AuthService {
 
-    @Value("${egroupx.services.urlSMSEndpoint}")
+    @Value("${egroupx.services.otpSMS.endpoint}")
     private String urlSMSEndpoint;
 
     private WebClient webClient;
 
-    private final Logger LOG = LoggerFactory.getLogger(LifeInsuranceService.class);
+    private final Logger LOG = LoggerFactory.getLogger(AuthService.class);
 
     private final AuthRepository authRepository;
 
@@ -49,7 +48,7 @@ public class AuthService {
    public Mono<ResponseEntity<APIResponse>> verifyUserCellNumber(String cellNumber){
         final String otpCode = generateOTPCode();
         String message = "eSure otp: "+ otpCode;
-        return sendSms(cellNumber,message).flatMap(apiRes->{
+        return retrieveOTPDetailsAndSendOTPSms(cellNumber,message).flatMap(apiRes->{
             if(apiRes.getStatus()==200){
                 return saveOTPDetails(cellNumber.trim(),LocalDateTime.now(),"",otpCode.trim())
                         .flatMap(apiResponse -> {
@@ -61,7 +60,7 @@ public class AuthService {
                         });
             }
             else{
-                if(cellNumber.trim().equalsIgnoreCase("27800000000")){
+                if(cellNumber.trim().contains("278000000")){
                     return saveOTPDetails(cellNumber.trim(),LocalDateTime.now(),"",otpCode.trim())
                             .flatMap(apiResponse -> {
                                 if(apiResponse.getStatus()==200){
@@ -84,7 +83,7 @@ public class AuthService {
     }
 
     public Mono<ResponseEntity<APIResponse>> verifyOTP(String cellNumber,String otpCode){
-        return getOTPDetails(cellNumber,otpCode).flatMap(apiRes->{
+        return verifyOTPDetails(cellNumber,otpCode).flatMap(apiRes->{
             if(apiRes.getStatus()==200){
                 return Mono.just(ResponseEntity.ok().body(apiRes));
             }else{
@@ -93,7 +92,7 @@ public class AuthService {
         });
     }
 
-    public Mono<APIResponse> sendSms(String cellNumber, String msg) {
+    public Mono<APIResponse> retrieveOTPDetailsAndSendOTPSms(String cellNumber, String msg) {
 
         if (cellNumber != null && msg != null) {
             LOG.error("CellNumber = [".concat(cellNumber).concat("]").concat(" === ").concat("Msg = [").concat(msg).concat("]"));
@@ -120,16 +119,17 @@ public class AuthService {
                         return sendOPT(smsDTO);
                             })
                     .onErrorResume(error->{
-                LOG.error(MessageFormat.format("Failed to retrieve otp details. Error {0}", error.getMessage()));
+                LOG.error(MessageFormat.format("Failed to retrieve otp details.  Error {0}", error.getMessage()));
                 return Mono.just(new APIResponse(400, "fail", "Failed to retrieve otp details", Instant.now()));
             }));
         }else{
-            return Mono.just(new APIResponse(400,"fail","OPT sms could not be send",Instant.now()));
+            return Mono.just(new APIResponse(400,"fail","OPT sms could not be send. ",Instant.now()));
         }
     }
 
     Mono<APIResponse> saveOTPDetails(String cellNumber, LocalDateTime requestTime, String idNumber, String otpCode) {
-        return authRepository.getOTPRequestDetails(cellNumber).flatMap(otpObj-> {
+        return authRepository.getOTPRequestDetails(cellNumber)
+                .flatMap(otpObj-> {
             //validate otp
             int count = 0;
             if(otpObj!=null && otpObj.getRequestTime()!=null) {
@@ -155,23 +155,57 @@ public class AuthService {
                 LOG.error(MessageFormat.format("Failed to save otp details. Error {0}", "Too many request received"));
                 return Mono.just(new APIResponse(400, "fail", "Failed to send otp. Too many request received.Please try again later.", Instant.now()));
             }
-        }).onErrorResume(error->{
+        })
+                .switchIfEmpty(Mono.defer(() -> {
+                    LOG.info(MessageFormat.format("This is a new cell number. {0} not found ", cellNumber));
+                    return authRepository.saveOTPRequestDetails(cellNumber, requestTime, idNumber, 0, otpCode).then(Mono.just("next"))
+                            .flatMap(msg -> {
+                                LOG.info(MessageFormat.format("Completed saving otp details {0}", cellNumber));
+                                return Mono.just(new APIResponse(200, "success","OTP details successfully saved for new cell number" , Instant.now()));
+                            }).onErrorResume(err -> {
+                                LOG.error(MessageFormat.format("Failed to save otp details. Error {0}", err.getMessage()));
+                                return Mono.just(new APIResponse(400, "fail", "Failed to save otp details", Instant.now()));
+                            });
+                }))
+                .onErrorResume(error->{
             LOG.error(MessageFormat.format("Failed to retrieve otp details. Error {0}", error.getMessage()));
             return Mono.just(new APIResponse(400, "fail", "Failed to retrieve otp details", Instant.now()));
         });
     }
 
-    Mono<APIResponse> getOTPDetails(String cellNumber,String otpMsg) {
+    Mono<APIResponse> verifyOTPDetails(String cellNumber,String otpMsg) {
         return authRepository.getOTPRequestDetails(cellNumber)
                 .flatMap(otpObj -> {
                     LOG.info(MessageFormat.format("Completed retrieving otp details {0}", cellNumber));
                     if(otpObj.getOtpCode().trim().equalsIgnoreCase(otpMsg.trim()) && otpObj.getRequestTime()!=null && LocalDateTime.now().isBefore(otpObj.getRequestTime().plus(5, ChronoUnit.MINUTES))) {
+
+                        return updateOTPVerificationDetails(true,cellNumber)
+                                .then(Mono.just("next").flatMap(msg->{
+                                    return Mono.just(new APIResponse(200, "success", "Cell number verified", Instant.now()));
+                                }));
+                    }else{
+                        return Mono.just(new APIResponse(400, "fail", "Cell number could not be verified", Instant.now()));
+                    }
+                }).switchIfEmpty(Mono.just("fail").flatMap(msg->{
+                    return Mono.just(new APIResponse(400,"fail","Cell number or OTP not valid",Instant.now()));
+                }))
+                .onErrorResume(err -> {
+                    LOG.error(MessageFormat.format("Failed to retrieve otp details. Error {0}", err.getMessage()));
+                    return Mono.just(new APIResponse(400,"fail","Failed to get otp",Instant.now()));
+                });
+    }
+
+    Mono<APIResponse> getCellVerificationDetails(String cellNumber) {
+        return authRepository.getOTPRequestDetails(cellNumber)
+                .flatMap(otpObj -> {
+                    LOG.info(MessageFormat.format("Completed retrieving otp details {0}", cellNumber));
+                    if(otpObj.isVerified()) {
                         return Mono.just(new APIResponse(200, "success", "Cell number verified", Instant.now()));
                     }else{
                         return Mono.just(new APIResponse(400, "fail", "Cell number could not be verified", Instant.now()));
                     }
                 }).switchIfEmpty(Mono.just("fail").flatMap(msg->{
-                    return Mono.just(new APIResponse(400,"success",msg,Instant.now()));
+                    return Mono.just(new APIResponse(400,"fail",msg,Instant.now()));
                 }))
                 .onErrorResume(err -> {
                     LOG.error(MessageFormat.format("Failed to retrieve otp details. Error {0}", err.getMessage()));
@@ -181,7 +215,7 @@ public class AuthService {
 
     Mono<APIResponse> sendOPT(SMSDTO smsDTO){
      return webClient.post()
-                .uri("")
+                .uri("/api/sms")
                 .header(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON_VALUE)
                 .header(HttpHeaders.ACCEPT, "*/*")
                 .bodyValue(smsDTO)
@@ -194,11 +228,21 @@ public class AuthService {
                         return new APIResponse(400,"fail","OPT sms could not be send",Instant.now());
                     }
                 })
-                .timeout(Duration.ofSeconds(2))
+                .timeout(Duration.ofSeconds(3))
                 .flatMap(Mono::just)
                 .onErrorResume(error->{
-                    LOG.error("OTP sms could not be send. Error "+ error.getMessage());
+                    LOG.error(MessageFormat.format("OTP sms could not be send. Error {0}", error.getMessage()));
                     return Mono.just(new APIResponse(400,"fail","OPT sms could not be send",Instant.now()));
                 });
+    }
+
+    Mono<String> updateOTPVerificationDetails(boolean isVerified,String cellNumber){
+        return authRepository.updateOTPVerificationDetails(isVerified,cellNumber).flatMap(msg->{
+            LOG.info(MessageFormat.format("Completed updating cell number verification details {0}",cellNumber));
+            return Mono.just("Completed updating cell number verification details "+ cellNumber);
+        }).onErrorResume(err -> {
+            LOG.error(MessageFormat.format("Failed to update cell number verification details {0}",err.getMessage()));
+            return Mono.just("Failed to update cell number verification details");
+        });
     }
 }

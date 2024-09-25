@@ -7,7 +7,6 @@ import com.egroupx.esure.repository.CustomerRepository;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.data.r2dbc.repository.Query;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
@@ -25,10 +24,10 @@ import java.util.Date;
 @Service
 public class CustomerService {
 
-    @Value("${egroupx.services.fspEndpointUrl}")
+    @Value("${egroupx.services.fsp.endpointUrl}")
     private String fspEndpointUrl;
 
-    @Value("${egroupx.services.fspAPIKey:}")
+    @Value("${egroupx.services.fsp.apiKey:}")
     private String fspAPIKey;
 
     @Value("${egroupx.email.sendEmail}")
@@ -44,7 +43,7 @@ public class CustomerService {
 
     private final EmailService emailService;
 
-    public CustomerService(CustomerRepository customerRepository, AllRisksRepository allRisksRepository, EmailService emailService) {
+    public CustomerService(CustomerRepository customerRepository, AllRisksRepository allRisksRepository, EmailService emailService, AuthService authService) {
         this.customerRepository = customerRepository;
         this.allRisksRepository = allRisksRepository;
         this.emailService = emailService;
@@ -82,6 +81,21 @@ public class CustomerService {
             LOG.error(MessageFormat.format("Failed to save customer details {0}",err.getMessage()));
             return Mono.just("Failed to save customer details");
         });
+    }
+
+    public Mono<ResponseEntity<APIResponse>> getCustomerStep(String idNumber) {
+        return customerRepository.findCustomerLastRecordStepByUserIdNumber(idNumber)
+                .flatMap(custStep -> {
+                    LOG.info(MessageFormat.format("Completed retrieving customer step details {0}", idNumber));
+                    return Mono.just(ResponseEntity.ok().body(new APIResponse(200, "success", custStep, Instant.now())));
+                }).switchIfEmpty(Mono.defer(() -> {
+                    LOG.error(MessageFormat.format("User {0} not found ", idNumber));
+                    return Mono.just(ResponseEntity.badRequest().body(new APIResponse(400, "Request failed", null, Instant.now())));
+                }))
+                .onErrorResume(err -> {
+                    LOG.error(MessageFormat.format("Failed to retrieve step details. Error {0}", err.getMessage()));
+                    return Mono.just(ResponseEntity.ok().body(new APIResponse(400, "fail", null, Instant.now())));
+                });
     }
 
     Mono<String> saveQuotationDetails(Long fspQouteRefId, String categoryId, String status){
@@ -284,16 +298,6 @@ public class CustomerService {
         });
     }
 
-    Mono<String> sendEmailPolicyNotifcation(Long fspPolicyId) {
-
-        return customerRepository.getCustomerEmailDetailsByPolicyId(fspPolicyId)
-                .flatMap(customer -> {
-                    return emailService.sendEmail(customer,"New Esure Policy").flatMap(Mono::just);
-                }).onErrorResume(err -> {
-                    LOG.error(MessageFormat.format("Failed to send email policy ref {0}. Error {1}",fspPolicyId, err.getMessage()));
-                    return Mono.just("Failed to send email");
-                });
-    }
 
     Mono<String> sendEmailQuotationNotification(Long fspPolicyId) {
         return customerRepository.getCustomerEmailDetailsByQuoteRef(fspPolicyId)
