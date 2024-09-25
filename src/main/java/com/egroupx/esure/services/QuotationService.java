@@ -124,6 +124,13 @@ public class QuotationService {
         setConfigs(fspEndpointUrl);
         ObjectMapper objectMapper = new ObjectMapper();
         objectMapper.registerModule(new JavaTimeModule());
+        //delay before retrieving result
+        try {
+            Thread.sleep(45000);
+            LOG.info("Waiting for results");
+        } catch (InterruptedException e) {
+            LOG.error("Error waiting for results");
+        }
         return webClient.get()
                 .uri("/api/insure/calculations/status/quotations/" + quotationId)
                 .header(HttpHeaders.ACCEPT, "*/*")
