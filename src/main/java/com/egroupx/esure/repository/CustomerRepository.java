@@ -54,6 +54,9 @@ public interface CustomerRepository extends ReactiveCrudRepository<Customer,Long
     @Query("select * from esure_customer where id_number=:idNumber or passport_number=:idNumber order by id desc limit 1")
     Mono<Customer>  findCustomerLastRecordsByUserIdNumber(String idNumber);
 
+    @Query("select * from esure_customer where fsp_quote_ref_id=:fspQouteRefId order by id desc limit 1")
+    Mono<Customer>  findCustomerLastRecordsByQuotationId(Long fspQouteRefId);
+
     @Query("select id,fsp_quote_ref_id,id_number,passport_number,step from esure_customer where id_number=:idNumber or passport_number=:idNumber order by id desc limit 1")
     Mono<CustomerStep> findCustomerLastRecordStepByUserIdNumber(String idNumber);
 

@@ -1,6 +1,10 @@
 package com.egroupx.esure.services;
 
 import com.egroupx.esure.dto.fsp_qoute.Quotation;
+import com.egroupx.esure.dto.fsp_qoute.ShLink;
+import com.egroupx.esure.dto.fsp_qoute.building.Buildings;
+import com.egroupx.esure.dto.fsp_qoute.house_hold.HouseholdContents;
+import com.egroupx.esure.dto.fsp_qoute.vehicle.MotorVehicles;
 import com.egroupx.esure.model.Customer;
 import com.egroupx.esure.model.responses.api.APIResponse;
 import com.egroupx.esure.model.responses.fsp_qoute_policies.QuotationResultResponse;
@@ -62,6 +66,31 @@ public class QuotationService {
         setConfigs(fspEndpointUrl);
         ObjectMapper objectMapper = new ObjectMapper();
         String formattedQuotationReq = null;
+        if(quotation.getMotorVehicles()!=null && quotation.getMotorVehicles().length>0){
+            for(MotorVehicles motorVehicles: quotation.getMotorVehicles()) {
+                List<ShLink> shLinks = new ArrayList<>();
+                shLinks.add(new ShLink(999999L,"SHRiskAddr"));
+                shLinks.add(new ShLink(999999L,"RegDrv"));
+                shLinks.add(new ShLink(999999L,"RegOwn"));
+                motorVehicles.setShLinks(shLinks);
+            }
+        }
+        if(quotation.getHouseholdContents()!=null && quotation.getHouseholdContents().length>0){
+            for(HouseholdContents householdContents: quotation.getHouseholdContents()) {
+                List<ShLink> shLinks = new ArrayList<>();
+                shLinks.add(new ShLink(999999L,"SHRiskAddr"));
+                householdContents.setShLinks(shLinks);
+            }
+        }
+
+        if(quotation.getBuildings()!=null && quotation.getBuildings().length>=1){
+            for(Buildings building: quotation.getBuildings()) {
+                List<ShLink> shLinks = new ArrayList<>();
+                shLinks.add(new ShLink(999999L,"SHRiskAddr"));
+                building.setShLinks(shLinks);
+            }
+        }
+
         try {
             formattedQuotationReq = objectMapper.writeValueAsString(quotation);
         } catch (JsonProcessingException ex) {

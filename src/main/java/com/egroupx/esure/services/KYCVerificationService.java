@@ -135,17 +135,17 @@ public class KYCVerificationService {
         });
     }
 
-    public Mono<ResponseEntity<APIResponse>> verifyPersonalDetailsForInsurance(String idNumber) {
+    public Mono<ResponseEntity<APIResponse>> verifyPersonalDetailsForInsurance(Long fspQouteRefId) {
 
 
-        return customerRepository.findCustomerLastRecordsByUserIdNumber(idNumber).flatMap(personalDetails -> {
+        return customerRepository.findCustomerLastRecordsByQuotationId(fspQouteRefId).flatMap(personalDetails -> {
                     PersonalDetailsDTO personalDetailsDTO = getPersonalDetailsDTO(personalDetails);
 
                     NameScanDTO nameScanReq = new NameScanDTO();
                     nameScanReq.setFirstName(personalDetailsDTO.getFirstName());
                     nameScanReq.setLastName(personalDetails.getSurname());
 
-                    LOG.info(MessageFormat.format("Verifying name scan personal details for user customer {0}", idNumber));
+                    LOG.info(MessageFormat.format("Verifying name scan personal details for user customer {0}", personalDetails.getIdNumber()));
                     return nameScanVerification(nameScanReq).flatMap(nameScanRes -> {
                         int nameScanResCode = nameScanRes.getStatus();
 
@@ -173,10 +173,10 @@ public class KYCVerificationService {
                                                 }
 
                                                 return switch (rsaIDVerResCode) {
-                                                    case 200 -> updateCustomerKYCDetails(idNumber,isNameScanPass,nameScanFailReason,isKycIdVerified,kycIdVerFailReason,personalDetails.getId());
+                                                    case 200 -> updateCustomerKYCDetails(personalDetails.getIdNumber(),isNameScanPass,nameScanFailReason,isKycIdVerified,kycIdVerFailReason,personalDetails.getId());
                                                     case 400 -> Mono.just(ResponseEntity.badRequest().body(idCheckRes));
                                                     //default -> Mono.just(ResponseEntity.internalServerError().body(idCheckRes));
-                                                    default->updateCustomerKYCDetails(idNumber,isNameScanPass,nameScanFailReason,isKycIdVerified,kycIdVerFailReason,personalDetails.getId());
+                                                    default->updateCustomerKYCDetails(personalDetails.getIdNumber(),isNameScanPass,nameScanFailReason,isKycIdVerified,kycIdVerFailReason,personalDetails.getId());
 
                                                 };
                                             }
@@ -191,7 +191,7 @@ public class KYCVerificationService {
                                     }
                                     boolean isKycIdVerified=false;
                                     String kycIdVerFailReason="";
-                                    yield updateCustomerKYCDetails(idNumber,isNameScanPass,nameScanFailReason,isKycIdVerified,kycIdVerFailReason,personalDetails.getId());
+                                    yield updateCustomerKYCDetails(personalDetails.getIdNumber(),isNameScanPass,nameScanFailReason,isKycIdVerified,kycIdVerFailReason,personalDetails.getId());
                                 }
                             }
                             case 400 -> Mono.just(ResponseEntity.badRequest().body(nameScanRes));
@@ -200,11 +200,11 @@ public class KYCVerificationService {
                     });
 
                 }).onErrorResume(error -> {
-                    LOG.error(MessageFormat.format("Error checking user {0} {1}", idNumber, error.getMessage()));
+                    LOG.error(MessageFormat.format("Error checking user quote ref id {0} {1}",fspQouteRefId, error.getMessage()));
                     return Mono.just(ResponseEntity.internalServerError().body(new APIResponse(500, "Request failed", "Error checking user. Please try again", Instant.now())));
                 })
                 .switchIfEmpty(Mono.defer(() -> {
-                    LOG.error(MessageFormat.format("User {0} not found ", idNumber));
+                    LOG.error(MessageFormat.format("User with quote ref id {0} not found ", fspQouteRefId));
                     return Mono.just(ResponseEntity.badRequest().body(new APIResponse(400, "Request failed", "User not found. Please try again", Instant.now())));
                 }));
 

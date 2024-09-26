@@ -31,8 +31,8 @@ public class CustomerController {
         return customerService.getCustomerStep(idNumber);
     }
 
-    @PostMapping(value = {"/submitCustomerDetails/{idNumber}"})
-    public Mono<ResponseEntity<APIResponse>> submitMemberDetails(@PathVariable String idNumber)  {
-        return kycVerificationService.verifyPersonalDetailsForInsurance(idNumber);
+    @PostMapping(value = {"/submitCustomerDetails/{quoteRefId}"})
+    public Mono<ResponseEntity<APIResponse>> submitMemberDetails(@PathVariable Long quoteRefId)  {
+        return kycVerificationService.verifyPersonalDetailsForInsurance(quoteRefId);
     }
 }

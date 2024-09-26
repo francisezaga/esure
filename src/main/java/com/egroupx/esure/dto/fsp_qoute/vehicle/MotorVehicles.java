@@ -7,6 +7,8 @@ import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
+import java.util.List;
+
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
@@ -37,5 +39,5 @@ public class MotorVehicles {
     private MotorVechicleShortTerm motorVechicleShortTerm;
     @JsonAlias("shLinks")
     @JsonProperty("sh-link")
-    private ShLink[] shLinks;
+    private List<ShLink> shLinks;
 }

@@ -227,7 +227,7 @@ public class AuthService {
                         return new APIResponse(400,"fail","OPT sms could not be send",Instant.now());
                     }
                 })
-                .timeout(Duration.ofSeconds(3))
+                .timeout(Duration.ofSeconds(5))
                 .flatMap(Mono::just)
                 .onErrorResume(error->{
                     LOG.error(MessageFormat.format("OTP sms could not be send. Error {0}", error.getMessage()));

@@ -51,7 +51,7 @@ public class EmailService {
 
     public Mono<String> sendEmail(EmailCustomer customer, String subject) {
 
-      /*  Properties props = new Properties();
+       Properties props = new Properties();
         props.put("mail.smtp.host", emailHost);
         props.put("mail.smtp.port", emailPort);
         props.put("mail.smtp.auth", "true");
@@ -120,8 +120,7 @@ public class EmailService {
         }catch (MessagingException mex){
             LOG.error(MessageFormat.format("Customer onboarding email notification failed to send for user {0} error {1}",customer.getLine_1(),mex.getMessage()));
             return Mono.just("Email not send");
-        }*/
-        return Mono.just("Email not send");
+        }
     }
 
     public Mono<String> sendEmailForLifeCover(Member member, String subject) {

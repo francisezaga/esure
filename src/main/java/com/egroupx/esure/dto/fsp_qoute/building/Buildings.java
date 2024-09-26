@@ -7,6 +7,8 @@ import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
+import java.util.List;
+
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
@@ -34,5 +36,5 @@ public class Buildings {
     private String propertyOwnedClaim;
     @JsonAlias("shLinks")
     @JsonProperty("sh-link")
-    private ShLink[] shLinks;
+    private List<ShLink> shLinks;
 }
