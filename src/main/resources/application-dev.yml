@@ -75,8 +75,6 @@ egroupx:
     otpSMS:
       endpoint: http://102.131.60.77:8088
 
-
-
   email:
     host: mail.ezaga.co.za
     port: 587

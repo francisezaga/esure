@@ -22,6 +22,7 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.*;
 import org.springframework.http.client.MultipartBodyBuilder;
 import org.springframework.http.codec.multipart.FilePart;
+import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.stereotype.Service;
 import org.springframework.web.reactive.function.BodyInserters;
 import org.springframework.web.reactive.function.client.WebClient;
@@ -77,6 +78,20 @@ public class LifeInsuranceService {
 
     public Mono<ResponseEntity<APIResponse>> createMember(MemberDTO memberDTO) {
         setConfigs(pol360EndpointUrl);
+
+        lifeInsuranceRepository.getLatestPolicyNumber().flatMap(polId->{
+            String policyId = generatePolicyId(polId);
+            memberDTO.setPolicyNumber(String.valueOf(policyId));
+            return Mono.just(polId);
+        }).switchIfEmpty(Mono.defer(() ->{
+            String policyId = generatePolicyId("");
+            memberDTO.setPolicyNumber(String.valueOf(policyId));
+            return Mono.just("next");
+        })).onErrorResume(error->{
+            String policyId = generatePolicyId("");
+            memberDTO.setPolicyNumber(String.valueOf(policyId));
+            return Mono.just("next");
+        }).subscribe();
 
         return authService.getCellVerificationDetails(memberDTO.getCellNumber()).flatMap(cellVerRes -> {
             if (cellVerRes.getStatus() == 200) {
@@ -838,5 +853,16 @@ public class LifeInsuranceService {
             return Mono.just(apiResponse);
         });
     }
+
+    public String generatePolicyId(String strPolicyId){
+        Long policyId = AppUtil.stringToLong(strPolicyId);
+        if(policyId==-1L){
+            policyId = policyId+100000;
+        }else{
+            policyId = policyId+1;
+        }
+        return String.valueOf(policyId);
+    }
+
 
 }

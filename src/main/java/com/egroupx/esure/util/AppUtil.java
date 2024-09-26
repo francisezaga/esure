@@ -54,9 +54,13 @@ public class AppUtil {
     }
 
     public static Long stringToLong(String strLong){
-        try {
-            return Long.parseLong(strLong);
-        }catch (NumberFormatException ex){
+        if(strLong!=null && !strLong.isEmpty()) {
+            try {
+                return Long.parseLong(strLong);
+            } catch (NumberFormatException ex) {
+                return -1L;
+            }
+        }else{
             return -1L;
         }
     }

@@ -43,6 +43,9 @@ public interface LifeInsuranceRepository extends ReactiveCrudRepository<MemberDT
     @Query("SELECT id,pol_360_main_member_id,id_number,step FROM esure_members WHERE idNumber=:idNumber order by id desc limit 1")
     Mono<MemberStep> findMemberLastRecordStepByIdNumber(String  idNumber);
 
+    @Query("SELECT policy_number FROM esure_members order by id desc limit 1")
+    Mono<String> getLatestPolicyNumber();
+
     @Query("UPDATE esure_members SET name_space_scan_pass=:nameSpaceScanPass, name_space_scan_fail_reason=:nameSpaceScanFailReason, id_verification_pass=:idVerificationPass,id_verification_fail_reason=:idVerificationFailReason WHERE id=:id")
     Mono<Member> updateMemberKycDetails(boolean nameSpaceScanPass,String nameSpaceScanFailReason, boolean idVerificationPass,String idVerificationFailReason,Long id);
 
