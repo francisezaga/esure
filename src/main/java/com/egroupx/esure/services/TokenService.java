@@ -2,6 +2,7 @@ package com.egroupx.esure.services;
 
 import com.egroupx.esure.dto.auth.Token;
 import com.egroupx.esure.model.responses.life.TokenResponse;
+import com.egroupx.esure.repository.ITokenRepository;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
@@ -35,9 +36,15 @@ public class TokenService {
     @Value("${egroupx.services.pol360.tokenUUID}")
     private String pol360TokenUUID;
 
+    private final ITokenRepository iTokenRepository;
+
     private final Logger LOG = LoggerFactory.getLogger(TokenService.class);
 
     private WebClient webClientPost;
+
+    public TokenService(ITokenRepository iTokenRepository) {
+        this.iTokenRepository = iTokenRepository;
+    }
 
     private void setConfigs(String endpointBaseUrl){
 
@@ -92,7 +99,7 @@ public class TokenService {
     }
 
     public Mono<String> getCitizenAPIToken(){
-        // return iTokenRepository.findCitizenAPIToken();
-        return Mono.just("");
+        return iTokenRepository.findCitizenAPIToken();
+        //return Mono.just("");
     }
 }
