@@ -2,6 +2,7 @@ package com.egroupx.esure.services;
 
 import com.egroupx.esure.dto.life.*;
 import com.egroupx.esure.dto.v360.ProductDTO;
+import com.egroupx.esure.enums.DOCType;
 import com.egroupx.esure.exceptions.LifeAPIErrorException;
 import com.egroupx.esure.exceptions.LifeAPIErrorHandler;
 import com.egroupx.esure.model.life.Member;
@@ -19,17 +20,21 @@ import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
 
 import org.springframework.http.*;
+import org.springframework.http.client.MultipartBodyBuilder;
+import org.springframework.http.codec.multipart.FilePart;
 import org.springframework.stereotype.Service;
 import org.springframework.web.reactive.function.BodyInserters;
 import org.springframework.web.reactive.function.client.WebClient;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 
+import java.nio.file.Paths;
 import java.text.MessageFormat;
 import java.time.Instant;
 import java.util.ArrayList;
 import java.util.Base64;
 import java.util.List;
+import java.util.UUID;
 
 @Service
 public class LifeInsuranceService {
@@ -42,6 +47,9 @@ public class LifeInsuranceService {
 
     @Value("${egroupx.services.pol360.password}")
     private String pol360Password;
+
+    @Value("${egroupx.files.dir}")
+    private String fileUploadDir;
 
     private WebClient webClient;
 
@@ -72,7 +80,7 @@ public class LifeInsuranceService {
 
         return authService.getCellVerificationDetails(memberDTO.getCellNumber()).flatMap(cellVerRes -> {
             if (cellVerRes.getStatus() == 200) {
-                
+
                 return tokenService.getPol360APIToken().flatMap(
                         bearerToken -> {
                             if (!bearerToken.isBlank() || !bearerToken.isEmpty()) {
@@ -553,7 +561,7 @@ public class LifeInsuranceService {
     }
 
     Mono<ResponseEntity<APIResponse>> saveExtendedDependent(ExtendedMemberDTO extendedMemberDto) {
-        return lifeInsuranceRepository.saveExtendedDependent(extendedMemberDto.getClient(), extendedMemberDto.getTitle(), extendedMemberDto.getFirstName(), extendedMemberDto.getSurname(), extendedMemberDto.getIdNumber(), extendedMemberDto.getGender(), AppUtil.formatDate(extendedMemberDto.getDateOfBirth()), extendedMemberDto.getAge(), extendedMemberDto.getMainMemberID(), extendedMemberDto.getPolicyNumber(),extendedMemberDto.getRelation())
+        return lifeInsuranceRepository.saveExtendedDependent(extendedMemberDto.getClient(), extendedMemberDto.getTitle(), extendedMemberDto.getFirstName(), extendedMemberDto.getSurname(), extendedMemberDto.getIdNumber(), extendedMemberDto.getGender(), AppUtil.formatDate(extendedMemberDto.getDateOfBirth()), extendedMemberDto.getAge(), extendedMemberDto.getMainMemberID(), extendedMemberDto.getPolicyNumber(), extendedMemberDto.getRelation())
                 .then(Mono.just("next"))
                 .flatMap(msg -> {
                     LOG.info(MessageFormat.format("Completed saving external dependent details {0}", extendedMemberDto.getMainMemberID()));
@@ -730,6 +738,105 @@ public class LifeInsuranceService {
                     LOG.error(MessageFormat.format("Failed to retrieve step details. Error {0}", err.getMessage()));
                     return Mono.just(ResponseEntity.ok().body(new APIResponse(400, "fail", null, Instant.now())));
                 });
+    }
+
+    public Mono<ResponseEntity<APIResponse>> saveMemberDocument(String mainMemberID, String policyNumber, String clientName, String function, Mono<FilePart> filePartMono, String docType) {
+        LOG.info(" Saving member document document");
+        setConfigs(pol360EndpointUrl);
+
+        return lifeInsuranceRepository.findMemberLastRecordByMainMemberNumber(Long.valueOf(mainMemberID)).flatMap(profile -> {
+                    LOG.info(MessageFormat.format("Saving document for user with memberID {0}", mainMemberID));
+
+                    return filePartMono.flatMap(filePart -> {
+                                String newFileName = "";
+                                LOG.info(MessageFormat.format("main memberId {0}", mainMemberID));
+                                int splitLength = filePart.filename().split("\\.").length;
+                                String fileExtension = filePart.filename().split("\\.")[splitLength - 1];
+
+                                newFileName = profile.getIdNumber() + "_" + DOCType.getDocType(docType) + "." + fileExtension;
+
+                                MultipartBodyBuilder formData = new MultipartBodyBuilder();
+                                formData.part("MemberID", mainMemberID);
+                                formData.part("PolicyNumber", policyNumber);
+                                formData.part("ClientName", clientName);
+                                formData.part("Function", function);
+                                formData.part("DocType", docType);
+                                formData.part("File", filePart);
+
+                                return filePart.transferTo(Paths.get(fileUploadDir + newFileName))
+                                        .then(Mono.just(newFileName).flatMap(fileName -> {
+                                            LOG.info(MessageFormat.format("Saving {0} for userId {1} with path {2}", docType, mainMemberID, fileUploadDir + fileName));
+                                            return saveMainMemberDocumentDetails(mainMemberID, docType, fileUploadDir + fileName);
+                                        })).then(Mono.just("next step")
+                                                .flatMap(msg -> {
+                                                    return uploadDocToPol360(formData)
+                                                            .flatMap(apiResponse -> {
+                                                                if (apiResponse.getStatus() == 200) {
+                                                                    return Mono.just(ResponseEntity.ok().body(apiResponse));
+                                                                } else {
+                                                                    return Mono.just(ResponseEntity.badRequest().body(apiResponse));
+                                                                }
+                                                            });
+                                                }));
+                            })
+                            .onErrorResume(error -> {
+                                LOG.error(MessageFormat.format("Error uploading {0}  for user with member id {1} {2}", docType, mainMemberID, error.getMessage()));
+                                return Mono.just(ResponseEntity.internalServerError().body(new APIResponse(500, "Request failed", "Error uploading " + docType + " for user with main member id" + mainMemberID + " " + error.getMessage(), Instant.now())));
+
+                            });
+                }).onErrorResume(error -> {
+                    LOG.error(MessageFormat.format("Error checking user with member id {0} {1} ", mainMemberID, error.getMessage()));
+                    return Mono.just(ResponseEntity.internalServerError().body(new APIResponse(500, "Request failed", "Error checking user with member id " + mainMemberID + " not found" + error.getMessage(), Instant.now())));
+                })
+                .switchIfEmpty(Mono.defer(() -> {
+                    LOG.error(MessageFormat.format("User with memberId {0} not found", mainMemberID));
+                    return Mono.just(ResponseEntity.badRequest().body(new APIResponse(400, "Request failed", "User member Id " + mainMemberID + " not found", Instant.now())));
+                }));
+
+    }
+
+    public Mono<APIResponse> saveMainMemberDocumentDetails(String mainMemberId, String docType, String filePath) {
+
+        return lifeInsuranceRepository.updateMainMemberDocumentsDetails(docType, filePath, mainMemberId).then(Mono.just("NEXT")).flatMap(cust -> {
+            LOG.info(MessageFormat.format("User with main member Id: {0} {1} documents successfully saved", mainMemberId, docType));
+            return Mono.just(new APIResponse(200, "success", "Document successfully saved", Instant.now()));
+        }).onErrorResume(err -> {
+            LOG.error(MessageFormat.format("User with main member Id: {0} {1} could not be saved. Error {2}", mainMemberId, docType, err.getMessage()));
+            return Mono.just(new APIResponse(500, "Request failed", "User with main member id: " + mainMemberId + " " + docType + " couldn't be saved", Instant.now()));
+        });
+    }
+
+
+    public Mono<APIResponse> uploadDocToPol360(MultipartBodyBuilder builder) {
+
+        return tokenService.getPol360APIToken().flatMap(
+                bearerToken -> {
+                    if (!bearerToken.isEmpty()) {
+                        return webClient.post()
+                                .uri("/api/360API.php")
+                                .header(HttpHeaders.ACCEPT, "*/*")
+                                .headers((headers -> headers.add("Authorization", bearerToken)))
+                                .body(BodyInserters.fromMultipartData(builder.build()))
+                                .retrieve()
+                                .toEntity(APIResponse.class).map(responseEntity -> {
+                                    if (responseEntity.getStatusCode().is2xxSuccessful()) {
+                                        APIResponse apiResponse = responseEntity.getBody();
+
+                                        return new APIResponse(200, "success", apiResponse.getMessage(), Instant.now());
+                                    } else {
+                                        LOG.error("Error uploading member file to pol360");
+                                        return new APIResponse(400, "fail", "Error uploading member file to pol360", Instant.now());
+                                    }
+                                }).onErrorResume(error -> {
+                                    LOG.error(MessageFormat.format("Failed to retrieve products {0}", error.getMessage()));
+                                    return Mono.just(new APIResponse(400, "fail", "Failed retrieve products ", Instant.now()));
+                                });
+                    } else {
+                        return Mono.just(new APIResponse(400, "fail", "Error retrieving products", Instant.now()));
+                    }
+                }).flatMap(apiResponse -> {
+            return Mono.just(apiResponse);
+        });
     }
 
 }

@@ -75,8 +75,6 @@ egroupx:
     otpSMS:
       endpoint: http://102.131.60.77:8088
 
-
-
   email:
     host: mail.ezaga.co.za
     port: 587
@@ -85,6 +83,9 @@ egroupx:
     username: noreply@ezaga.co.za
     password: Dv1E}^VR5L?L
     sendEmail: true
+
+  files:
+    dir:
 
 management:
   endpoints:

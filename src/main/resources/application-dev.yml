@@ -86,6 +86,9 @@ egroupx:
     password: Dv1E}^VR5L?L
     sendEmail: true
 
+  files:
+    dir: C:/Users/FrancisChinyanga/Desktop/files/
+
 management:
   endpoints:
     metrics:

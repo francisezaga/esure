@@ -6,8 +6,11 @@ import com.egroupx.esure.model.responses.api.APIResponse;
 import com.egroupx.esure.services.KYCVerificationService;
 import com.egroupx.esure.services.LifeInsuranceService;
 import org.springframework.http.ResponseEntity;
+import org.springframework.http.codec.multipart.FilePart;
 import org.springframework.web.bind.annotation.*;
 import reactor.core.publisher.Mono;
+
+import java.util.UUID;
 
 @RestController
 @RequestMapping(path = "/esure/life")
@@ -70,5 +73,10 @@ public class LifeInsuranceController {
     @PostMapping(value = {"/submitMemberDetails/{memberId}"})
     public Mono<ResponseEntity<APIResponse>> submitMemberDetails(@PathVariable Long memberId)  {
         return kycVerificationService.verifyPersonalDetailsForLifeCover(memberId);
+    }
+
+    @PostMapping(value = {"/uploadMemberDoc"},produces="application/json")
+    public Mono<ResponseEntity<APIResponse>> uploadMemberDoc(@RequestPart("MemberID") String mainMemberId,@RequestPart("PolicyNumber") String policyNumber,@RequestPart("ClientName") String clientName,@RequestPart("Function") String function,@RequestPart("File") Mono<FilePart> filePartMono,@RequestPart("DocType") String docType){
+        return lifeInsuranceService.saveMemberDocument(mainMemberId,policyNumber,clientName,function,filePartMono,docType);
     }
 }

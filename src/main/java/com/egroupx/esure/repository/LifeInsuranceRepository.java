@@ -49,8 +49,11 @@ public interface LifeInsuranceRepository extends ReactiveCrudRepository<MemberDT
     @Query("UPDATE esure_members SET step=:step WHERE id=:id")
     Mono<Member> updateMemberStepDetails(String step,Long id);
 
-    @Query("SELECT * FROM esure_spouses WHERE  main_member_id=:mainMemberId")
+    @Query("SELECT * FROM esure_spouses WHERE main_member_id=:mainMemberId")
     Flux<Spouse> findSpouseByIdNumber(String mainMemberId);
+
+    @Query("UPDATE esure_members SET doc_type=:docType, file_path=:filePath WHERE pol_360_main_member_id=:mainMemberId")
+    Mono<Member> updateMainMemberDocumentsDetails(String docType,String filePath,String mainMemberId);
 
     @Query("SELECT * FROM esure_ext_dependents WHERE  main_member_id=:mainMemberId")
     Flux<ExtendedMember> findExtendedMemberByIdNumber(String mainMemberId);
