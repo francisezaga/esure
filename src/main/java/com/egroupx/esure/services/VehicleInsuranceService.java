@@ -49,7 +49,7 @@ public class VehicleInsuranceService {
                 .build();
     }
 
-    public Mono<ResponseEntity<APIResponse>> getVehicleManufacturersByYear(int year) {
+    public Mono<ResponseEntity<APIResponse>> getVehicleManufacturersByYear(String year) {
         setConfigs(fspEndpointUrl);
         return webClient.get()
                 .uri("/api/insure/lookups/vehicles/manufacturers?year="+year)
@@ -65,7 +65,7 @@ public class VehicleInsuranceService {
                 });
     }
 
-    public Mono<ResponseEntity<APIResponse>> getVehicleModelsByManufacturerCodeAndYear(String manufacturerCode,int year) {
+    public Mono<ResponseEntity<APIResponse>> getVehicleModelsByManufacturerCodeAndYear(String manufacturerCode,String year) {
         setConfigs(fspEndpointUrl);
         return webClient.get()
                 .uri("/api/insure/lookups/vehicles/manufacturers/"+manufacturerCode+"/models?year="+year)

@@ -21,8 +21,8 @@ public class CustomerController {
         this.kycVerificationService = kycVerificationService;
     }
 
-    @GetMapping(value = {"/getAddressSuburbs"})
-    public Mono<ResponseEntity<APIResponse>> getAddressSuburbs(@RequestParam String suburbName)  {
+    @PostMapping(value = {"/getAddressSuburbs/{suburbName}"})
+    public Mono<ResponseEntity<APIResponse>> getAddressSuburbs(@PathVariable String suburbName)  {
         return customerService.getAddressSuburbs(suburbName);
     }
 

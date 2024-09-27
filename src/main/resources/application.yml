@@ -3,7 +3,7 @@ spring:
     name: esure
 
   profiles:
-    active: dev
+    active: qa
     logging:
       level:
         org.springframework.security.web: DEBUG

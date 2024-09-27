@@ -16,13 +16,13 @@ public class VehicleInsuranceController {
         this.vehicleInsuranceService = carInsuranceService;
     }
 
-    @GetMapping(value = {"/getVehicleManufacturers"})
-    public Mono<ResponseEntity<APIResponse>> getVehicleManufacturers(@RequestParam int year) {
+    @PostMapping(value = {"/getVehicleManufacturers/{year}"})
+    public Mono<ResponseEntity<APIResponse>> getVehicleManufacturers(@PathVariable String year) {
        return vehicleInsuranceService.getVehicleManufacturersByYear(year);
     }
 
-    @GetMapping(value = {"/getVehicleModels/{manufacturerCode}/{year}"})
-    public Mono<ResponseEntity<APIResponse>> getVehicleModelsByYearAndManufacturerCode(@PathVariable String manufacturerCode,@PathVariable int year)  {
+    @PostMapping(value = {"/getVehicleModels/{manufacturerCode}/{year}"})
+    public Mono<ResponseEntity<APIResponse>> getVehicleModelsByYearAndManufacturerCode(@PathVariable String manufacturerCode,@PathVariable String year)  {
         return vehicleInsuranceService.getVehicleModelsByManufacturerCodeAndYear(manufacturerCode,year);
     }
 
