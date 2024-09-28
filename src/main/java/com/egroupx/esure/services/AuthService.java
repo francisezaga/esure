@@ -204,7 +204,7 @@ public class AuthService {
                         return Mono.just(new APIResponse(400, "fail", "Cell number could not be verified", Instant.now()));
                     }
                 }).switchIfEmpty(Mono.just("fail").flatMap(msg->{
-                    return Mono.just(new APIResponse(400,"fail",msg,Instant.now()));
+                    return Mono.just(new APIResponse(400,"fail","Cell number could not be verified",Instant.now()));
                 }))
                 .onErrorResume(err -> {
                     LOG.error(MessageFormat.format("Failed to retrieve otp details. Error {0}", err.getMessage()));

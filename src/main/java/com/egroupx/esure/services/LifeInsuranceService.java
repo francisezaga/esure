@@ -60,12 +60,15 @@ public class LifeInsuranceService {
 
     private final AuthService authService;
 
+    private final EmailService emailService;
+
     private final Logger LOG = LoggerFactory.getLogger(LifeInsuranceService.class);
 
-    public LifeInsuranceService(TokenService tokenService, LifeInsuranceRepository lifeInsuranceRepository, AuthService authService) {
+    public LifeInsuranceService(TokenService tokenService, LifeInsuranceRepository lifeInsuranceRepository, AuthService authService, EmailService emailService) {
         this.tokenService = tokenService;
         this.lifeInsuranceRepository = lifeInsuranceRepository;
         this.authService = authService;
+        this.emailService = emailService;
     }
 
     private void setConfigs(String endpointUrl) {
@@ -79,15 +82,15 @@ public class LifeInsuranceService {
     public Mono<ResponseEntity<APIResponse>> createMember(MemberDTO memberDTO) {
         setConfigs(pol360EndpointUrl);
 
-        lifeInsuranceRepository.getLatestPolicyNumber().flatMap(polId->{
+        lifeInsuranceRepository.getLatestPolicyNumber().flatMap(polId -> {
             String policyId = generatePolicyId(polId);
             memberDTO.setPolicyNumber(String.valueOf(policyId));
             return Mono.just(polId);
-        }).switchIfEmpty(Mono.defer(() ->{
+        }).switchIfEmpty(Mono.defer(() -> {
             String policyId = generatePolicyId("");
             memberDTO.setPolicyNumber(String.valueOf(policyId));
             return Mono.just("next");
-        })).onErrorResume(error->{
+        })).onErrorResume(error -> {
             String policyId = generatePolicyId("");
             memberDTO.setPolicyNumber(String.valueOf(policyId));
             return Mono.just("next");
@@ -155,21 +158,32 @@ public class LifeInsuranceService {
 
                             }
                         }
-                        return saveMember(memberID, memberDTO)
+                        return saveORUpdateMember(memberID, memberDTO)
                                 .then(Mono.just("next"))
                                 .flatMap(msg -> {
                                     return Mono.just(ResponseEntity.ok(new APIResponse(200, "success", lifeAPIResponse, Instant.now())));
                                 });
                     } else {
-               /* return saveMember("", memberDTO.getClient(), memberDTO.getAgentCode(), memberDTO.getPolicyNumber(), memberDTO.getBrokerCode(), memberDTO.getTitle(), memberDTO.getFirstName(), memberDTO.getSurname(), memberDTO.getIdNumber(), memberDTO.getGender(), memberDTO.getDateOfBirth(),
-                        memberDTO.getAge(), memberDTO.getCellNumber(), memberDTO.getAltCellNumber(), memberDTO.getWorkNumber(), memberDTO.getHomeNumber(), memberDTO.getEmail(), memberDTO.getFax(), memberDTO.getContactType(), memberDTO.getPostalAddress1(), memberDTO.getPostalAddress2(), memberDTO.getPostalAddress3(), memberDTO.getPostalCode(), memberDTO.getResidentialAddress1(),
-                        memberDTO.getResidentialAddress2(), memberDTO.getResidentialAddress3(), memberDTO.getResidentialCode(), memberDTO.getMemberType(), memberDTO.getPremium(), memberDTO.getCover(), memberDTO.getAddPolicyID(), memberDTO.getStatusCode());
-                */
                         return Mono.just(ResponseEntity.badRequest().body(apiResponse));
                     }
                 });
             } else {
                 return Mono.just(ResponseEntity.status(401).body(new APIResponse(401, "Unauthorized", "Cellphone number is not verified.Please verify your cell number and try again", Instant.now())));
+            }
+        });
+    }
+
+    public Mono<ResponseEntity<APIResponse>> saveMemberPersonalDetails(MemberDTO memberDTO) {
+
+        return authService.getCellVerificationDetails(memberDTO.getCellNumber()).flatMap(cellVerRes -> {
+            if (cellVerRes.getStatus() == 200) {
+
+                return savePersonalDetails(memberDTO)
+                        .flatMap(msg -> {
+                            return Mono.just(ResponseEntity.ok(new APIResponse(200, "success",msg, Instant.now())));
+                        });
+            } else {
+                return Mono.just(ResponseEntity.badRequest().body(cellVerRes));
             }
         });
     }
@@ -549,6 +563,22 @@ public class LifeInsuranceService {
         });
     }
 
+    Mono<String> saveORUpdateMember(String memberID, MemberDTO memberDTO) {
+        return lifeInsuranceRepository.findMemberLastRecordByIdNumber(memberDTO.getIdNumber().trim())
+                .flatMap(member -> {
+                    LOG.info(MessageFormat.format("Member already exist. Updating member {0}", memberDTO.getIdNumber()));
+                    return updateMember(memberID, memberDTO);
+                })
+                .switchIfEmpty(Mono.defer(() -> {
+                    LOG.error(MessageFormat.format("Member does not existing {0}. Saving member ", memberDTO.getIdNumber()));
+                    return saveMember(memberID, memberDTO);
+                }))
+                .onErrorResume(err -> {
+                    LOG.error(MessageFormat.format("Failed to save or update member details. Error {0}", err.getMessage()));
+                    return Mono.just("Failed to save or update member details");
+                });
+    }
+
     Mono<String> saveMember(String memberID, MemberDTO memberDTO) {
         return lifeInsuranceRepository.saveMember(memberID, memberDTO.getClient(), memberDTO.getAgentCode(), memberDTO.getPolicyNumber(), memberDTO.getBrokerCode(), memberDTO.getTitle(), memberDTO.getFirstName(), memberDTO.getSurname(), memberDTO.getIdNumber(), memberDTO.getGender(), AppUtil.formatDate(memberDTO.getDateOfBirth()), memberDTO.getAge(), memberDTO.getCellNumber(), memberDTO.getAltCellNumber(), memberDTO.getWorkNumber(), memberDTO.getHomeNumber(), memberDTO.getEmail(), memberDTO.getFax(), memberDTO.getContactType(), memberDTO.getPostalAddress1(), memberDTO.getPostalAddress2(),
                         memberDTO.getPostalAddress3(), memberDTO.getPostalCode(), memberDTO.getResidentialAddress1(), memberDTO.getResidentialAddress2(), memberDTO.getResidentialAddress3(), memberDTO.getResidentialCode(), memberDTO.getMemberType(), memberDTO.getPremium(), memberDTO.getCover(), memberDTO.getAddPolicyID(), memberDTO.getStatusCode()
@@ -559,6 +589,45 @@ public class LifeInsuranceService {
                 }).onErrorResume(err -> {
                     LOG.error(MessageFormat.format("Failed to save member details. Error {0}", err.getMessage()));
                     return Mono.just("Failed to save member details");
+                });
+    }
+
+    Mono<String> updateMember(String memberID, MemberDTO memberDTO) {
+        return lifeInsuranceRepository.updateMember(memberID, memberDTO.getClient(), memberDTO.getAgentCode(), memberDTO.getPolicyNumber(), memberDTO.getBrokerCode(), memberDTO.getTitle(), memberDTO.getFirstName(), memberDTO.getSurname(), memberDTO.getIdNumber(), memberDTO.getGender(), AppUtil.formatDate(memberDTO.getDateOfBirth()), memberDTO.getAge(), memberDTO.getCellNumber(), memberDTO.getAltCellNumber(), memberDTO.getWorkNumber(), memberDTO.getHomeNumber(), memberDTO.getEmail(), memberDTO.getFax(), memberDTO.getContactType(), memberDTO.getPostalAddress1(), memberDTO.getPostalAddress2(),
+                        memberDTO.getPostalAddress3(), memberDTO.getPostalCode(), memberDTO.getResidentialAddress1(), memberDTO.getResidentialAddress2(), memberDTO.getResidentialAddress3(), memberDTO.getResidentialCode(), memberDTO.getMemberType(), memberDTO.getPremium(), memberDTO.getCover(), memberDTO.getAddPolicyID(), memberDTO.getStatusCode()
+                ).then(Mono.just("next"))
+                .flatMap(msg -> {
+                    LOG.info(MessageFormat.format("Completed updating member details {0}", memberDTO.getPolicyNumber()));
+                    return Mono.just("Member details successfully updated");
+                }).onErrorResume(err -> {
+                    LOG.error(MessageFormat.format("Failed to update member details. Error {0}", err.getMessage()));
+                    return Mono.just("Failed to update member details");
+                });
+    }
+
+    Mono<String> savePersonalDetails(MemberDTO memberDTO) {
+
+        return lifeInsuranceRepository.findMemberLastRecordByIdNumber(memberDTO.getIdNumber().trim())
+                .flatMap(member -> {
+                    LOG.info(MessageFormat.format("Member already exist. {0}", memberDTO.getIdNumber()));
+                    return Mono.just("Personal details already exist");
+                })
+                .switchIfEmpty(Mono.defer(() -> {
+                    LOG.error(MessageFormat.format("Member does not existing {0}. Saving member ", memberDTO.getIdNumber()));
+                    return lifeInsuranceRepository.saveMemberPersonalDetails(memberDTO.getTitle(), memberDTO.getFirstName(), memberDTO.getSurname(), memberDTO.getIdNumber(), memberDTO.getGender(), AppUtil.formatDate(memberDTO.getDateOfBirth()), memberDTO.getAge(), memberDTO.getCellNumber(), memberDTO.getAltCellNumber(), memberDTO.getWorkNumber(), memberDTO.getHomeNumber(), memberDTO.getEmail(), memberDTO.getContactType()).then(Mono.just("next"))
+                            .flatMap(msg -> {
+                                LOG.info(MessageFormat.format("Completed saving member personal details {0}", memberDTO.getIdNumber()));
+                                return sendEmailLifeCoverNotification(memberDTO.getIdNumber()).flatMap(res-> {
+                                    return Mono.just("Personal details saved");
+                                });
+                            }).onErrorResume(err -> {
+                                LOG.error(MessageFormat.format("Failed to save member personal details. Error {0}", err.getMessage()));
+                                return Mono.just("Failed to save member personal details");
+                            });
+                }))
+                .onErrorResume(err -> {
+                    LOG.error(MessageFormat.format("Failed to saving member details. Error {0}", err.getMessage()));
+                    return Mono.just("Failed to saving member details");
                 });
     }
 
@@ -821,7 +890,6 @@ public class LifeInsuranceService {
         });
     }
 
-
     public Mono<APIResponse> uploadDocToPol360(MultipartBodyBuilder builder) {
 
         return tokenService.getPol360APIToken().flatMap(
@@ -854,15 +922,23 @@ public class LifeInsuranceService {
         });
     }
 
-    public String generatePolicyId(String strPolicyId){
+    public String generatePolicyId(String strPolicyId) {
         Long policyId = AppUtil.stringToLong(strPolicyId);
-        if(policyId==-1L){
-            policyId = policyId+100000;
-        }else{
-            policyId = policyId+1;
+        if (policyId == -1L) {
+            policyId = policyId + 100000;
+        } else {
+            policyId = policyId + 1;
         }
         return String.valueOf(policyId);
     }
 
-
+    Mono<String> sendEmailLifeCoverNotification(String idNumber) {
+        return lifeInsuranceRepository.findMemberLastRecordByIdNumber(idNumber)
+                .flatMap(member -> {
+                    return emailService.sendEmailForLifeCover(member, "New eSure Request To Create A Life Cover Account").flatMap(Mono::just);
+                }).onErrorResume(err -> {
+                    LOG.error(MessageFormat.format("Failed to send email life cover ref {0}. Error {1}", idNumber, err.getMessage()));
+                    return Mono.just("Failed to send email");
+                });
+    }
 }

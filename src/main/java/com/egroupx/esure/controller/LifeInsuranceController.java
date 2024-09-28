@@ -30,6 +30,11 @@ public class LifeInsuranceController {
         return lifeInsuranceService.createMember(member);
     }
 
+    @PostMapping(value = {"/saveMemberPersonalDetails"})
+    public Mono<ResponseEntity<APIResponse>> saveMemberPersonalDetails(@RequestBody MemberDTO member)  {
+        return lifeInsuranceService.saveMemberPersonalDetails(member);
+    }
+
     @PostMapping(value = {"/createBeneficiary"})
     public Mono<ResponseEntity<APIResponse>> createBeneficiary(@RequestBody BeneficiaryDTO beneficiary)  {
         return lifeInsuranceService.createBeneficiary(beneficiary);
