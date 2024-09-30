@@ -284,7 +284,10 @@ public class PolicyService {
                         }
                         customer.setInstructions(instructions);
                     }
-                    return emailService.sendEmail(customer, "New Esure Policy").flatMap(Mono::just);
+                    return emailService.sendEmail(customer, "New Esure Policy")
+                            .flatMap(email-> emailService.sendInsuranceWelcomeEmail(customer,"Welcome To eSure Insurance")
+                                        .flatMap(Mono::just)
+                            );
                 }).onErrorResume(err -> {
                     LOG.error(MessageFormat.format("Failed to send email policy ref {0}. Error {1}", fspPolicyId, err.getMessage()));
                     return Mono.just("Failed to send email");

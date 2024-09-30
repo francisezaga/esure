@@ -374,7 +374,10 @@ public class KYCVerificationService {
     Mono<String> sendEmailLifeCoverNotification(String idNumber) {
         return lifeInsuranceRepository.findMemberLastRecordByIdNumber(idNumber)
                 .flatMap(member -> {
-                    return emailService.sendEmailForLifeCover(member,"New Esure Life Cover").flatMap(Mono::just);
+                    return emailService.sendEmailForLifeCover(member, "New eSure Life Cover")
+                            .flatMap(email-> emailService.sendLifeCoverWelcomeEmail(member,"Welcome To eSure Life Cover")
+                                    .flatMap(Mono::just)
+                            );
                 }).onErrorResume(err -> {
                     LOG.error(MessageFormat.format("Failed to send email life cover ref {0}. Error {1}",idNumber, err.getMessage()));
                     return Mono.just("Failed to send email");
