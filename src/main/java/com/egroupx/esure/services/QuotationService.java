@@ -5,6 +5,9 @@ import com.egroupx.esure.dto.fsp_qoute.ShLink;
 import com.egroupx.esure.dto.fsp_qoute.building.Buildings;
 import com.egroupx.esure.dto.fsp_qoute.house_hold.HouseholdContents;
 import com.egroupx.esure.dto.fsp_qoute.vehicle.MotorVehicles;
+import com.egroupx.esure.exceptions.APIErrorException;
+import com.egroupx.esure.exceptions.APIErrorHandler;
+import com.egroupx.esure.exceptions.LifeAPIErrorException;
 import com.egroupx.esure.model.Customer;
 import com.egroupx.esure.model.responses.api.APIResponse;
 import com.egroupx.esure.model.responses.fsp_qoute_policies.QuotationResultResponse;
@@ -18,6 +21,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpHeaders;
+import org.springframework.http.HttpStatusCode;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
@@ -103,6 +107,11 @@ public class QuotationService {
                 .header(HttpHeaders.ACCEPT, "*/*")
                 .body(BodyInserters.fromObject(formattedQuotationReq))
                 .retrieve()
+                .onStatus(HttpStatusCode::isError, response -> response.bodyToMono(String.class) // error body as String or other class
+                        .flatMap(error -> {
+                            LOG.error(error);
+                            return Mono.error(new APIErrorException(error));
+                        }))
                 .toEntity(QuotationResponse.class).map(responseEntity -> {
                     if (responseEntity.getStatusCode().is2xxSuccessful()) {
                         Object resObj = responseEntity.getBody();
@@ -123,7 +132,8 @@ public class QuotationService {
                     }
                 }).onErrorResume(error -> {
                     LOG.info(MessageFormat.format("Failed to to get quotation {0}", error.getMessage()));
-                    return Mono.just(ResponseEntity.badRequest().body(new APIResponse(400, "Failed", "Failed to get quotation", Instant.now())));
+                    String errorMsg = APIErrorHandler.handleFSPAPIError(error.getMessage()).isEmpty() ? error.getMessage() : APIErrorHandler.handleFSPAPIError(error.getMessage());
+                    return Mono.just(ResponseEntity.badRequest().body(new APIResponse(400, "Failed", "Failed to get quotation. "+errorMsg, Instant.now())));
                 });
     }
 

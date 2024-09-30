@@ -2,6 +2,9 @@ package com.egroupx.esure.services;
 
 import com.egroupx.esure.dto.fsp_policy.Policy;
 
+import com.egroupx.esure.exceptions.APIErrorException;
+import com.egroupx.esure.exceptions.APIErrorHandler;
+import com.egroupx.esure.exceptions.LifeAPIErrorException;
 import com.egroupx.esure.model.policies.PolicyAdditionalInfo;
 import com.egroupx.esure.model.responses.api.APIResponse;
 
@@ -14,6 +17,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpHeaders;
+import org.springframework.http.HttpStatusCode;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
@@ -80,30 +84,43 @@ public class PolicyService {
                 .header(HttpHeaders.ACCEPT, "*/*")
                 .body(BodyInserters.fromObject(formattedPolicyReq))
                 .retrieve()
+                .onStatus(HttpStatusCode::isError, response -> response.bodyToMono(String.class) // error body as String or other class
+                        .flatMap(error -> {
+                            LOG.error(error);
+                            return Mono.error(new APIErrorException(error));
+                        }))
                 .toEntity(Object.class).map(responseEntity -> {
                     if (responseEntity.getStatusCode().is2xxSuccessful()) {
                         Object obj2 = responseEntity.getBody();
                         LOG.info("Successfully processed policy");
                         // return
-                        return new APIResponse(200, "success", obj2, Instant.now());
+                        return new APIResponse(200, "success", "Policy successfully accepted", Instant.now());
                     } else {
                         LOG.error(MessageFormat.format("Failed to process policy. Error code {0}", responseEntity.getStatusCode().value()));
-                        return new APIResponse(400, "Failed to process policy", "Failed to process policy. Please try again or contact admin", Instant.now());
+                        return new APIResponse(200, "success", "Policy will be saved but failed to process. Please try again or contact admin", Instant.now());
                     }
                 }).onErrorResume(error -> {
                     LOG.error(MessageFormat.format("Failed to process policy. Error code {0}", error.getMessage()));
-                    return Mono.just(new APIResponse(500, "Failed to process policy", "Failed to process policy. Please try again or contact admin", Instant.now()));
+                    String errorMsg = APIErrorHandler.handleFSPAPIError(error.getMessage()).isEmpty() ? error.getMessage() : APIErrorHandler.handleFSPAPIError(error.getMessage());
+                    int errorCode = APIErrorHandler.handleFSPAPIErrorCode(error.getMessage());
+                    return Mono.just(new APIResponse(200, "success", errorCode==404?"Policy not found "+errorMsg:"Policy might be saved but failed to process. "+errorMsg+ "Please try again or contact admin", Instant.now()));
                 }).flatMap(apiResponse -> {
                     if (apiResponse.getStatus() == 200) {
                         return retrieveAndSavePolicy(policyId, "success", policyReq).flatMap(polRes -> {
                             return sendEmailNotifcation(policyId, policyReq).then(Mono.just("next"))
-                                    .flatMap(msg -> Mono.just(polRes));
+                                    .flatMap(msg -> Mono.just(ResponseEntity.ok().body(apiResponse)));
                         });
                     } else {
                         return retrieveAndSavePolicy(policyId, "FSP_Accept_Policy_Error", policyReq).flatMap(polRes -> {
                             //send email
-                            return sendEmailNotifcation(policyId, policyReq).then(Mono.just("next"))
-                                    .flatMap(msg -> Mono.just(polRes));
+                            if(polRes!=null) {
+                                LOG.info("Policy found "+policyId);
+                                return sendEmailNotifcation(policyId, policyReq).then(Mono.just("next"))
+                                        .flatMap(msg -> Mono.just(ResponseEntity.badRequest().body(apiResponse)));
+                            }else{
+                                LOG.info("Policy not found "+ policyId);
+                                return Mono.just(ResponseEntity.badRequest().body(apiResponse));
+                            }
                         });
                     }
                 });
@@ -116,6 +133,11 @@ public class PolicyService {
                 .uri("/api/insure/policies/" + policyId)
                 .header(HttpHeaders.ACCEPT, "*/*")
                 .retrieve()
+                .onStatus(HttpStatusCode::isError, response -> response.bodyToMono(String.class) // error body as String or other class
+                        .flatMap(error -> {
+                            LOG.error(error);
+                            return Mono.error(new APIErrorException(error));
+                        }))
                 .toEntity(PolicyResponse.class).map(responseEntity -> {
                     if (responseEntity.getStatusCode().is2xxSuccessful()) {
                         PolicyResponse policy = responseEntity.getBody();
@@ -186,7 +208,7 @@ public class PolicyService {
         });
     }
 
-    public Mono<ResponseEntity<APIResponse>> retrieveAndSavePolicy(Long policyId, String esureStatus, Policy policyReq) {
+    public Mono<APIResponse> retrieveAndSavePolicy(Long policyId, String esureStatus, Policy policyReq) {
         return getFSPPolicy(policyId).flatMap(policy -> {
             String idNumber = "";
             if (policy != null) {
@@ -202,18 +224,18 @@ public class PolicyService {
                 return savePolicy(policyId, AppUtil.stringToLong(policy.getInsurerId()), AppUtil.stringToInteger(policy.getCategoryId()), policy.getDateQuoted(), "ACCEPTED", AppUtil.stringToLong(policy.getBrokerCode()), policy.getExternalPolicyNo(), AppUtil.stringToLong(policy.getQuotationId()), AppUtil.stringToDouble(policy.getQuotePremium()), AppUtil.stringToLong(policy.getOfferingId()), policy.getOfferingName(), policy.getErrorStatus(), idNumber, esureStatus, AppUtil.stringToLong(policy.getQuotationId()), policyReq).
                         flatMap(msg -> {
                             LOG.info(msg);
-                            return Mono.just(ResponseEntity.ok().body(new APIResponse(200, "success", msg, Instant.now())));
+                            return Mono.just(new APIResponse(200, "success", msg, Instant.now()));
                         }).onErrorResume(error -> {
                             LOG.error("Error " + error.getMessage());
-                            return Mono.just(ResponseEntity.badRequest().body(new APIResponse(400, "fail", "Something went wrong", Instant.now())));
+                            return Mono.just(new APIResponse(400, "fail", "Something went wrong", Instant.now()));
                         });
 
             } else {
-                return Mono.just(ResponseEntity.internalServerError().body(new APIResponse(500, "fail", "Policy could not be processed", Instant.now())));
+                return Mono.just(new APIResponse(500, "fail", "Policy could not be processed", Instant.now()));
             }
         }).onErrorResume(error -> {
             LOG.error("Failed to process qoute " + error.getMessage());
-            return Mono.just(ResponseEntity.internalServerError().body(new APIResponse(500, "fail", "Policy could not be processed", Instant.now())));
+            return Mono.just(new APIResponse(500, "fail", "Policy could not be processed", Instant.now()));
         });
 
     }

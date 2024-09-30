@@ -3,8 +3,8 @@ package com.egroupx.esure.services;
 import com.egroupx.esure.dto.life.*;
 import com.egroupx.esure.dto.v360.ProductDTO;
 import com.egroupx.esure.enums.DOCType;
+import com.egroupx.esure.exceptions.APIErrorHandler;
 import com.egroupx.esure.exceptions.LifeAPIErrorException;
-import com.egroupx.esure.exceptions.LifeAPIErrorHandler;
 import com.egroupx.esure.model.life.Member;
 import com.egroupx.esure.model.responses.api.APIResponse;
 
@@ -139,7 +139,7 @@ public class LifeInsuranceService {
                                             }
                                         }).onErrorResume(error -> {
                                             LOG.error(MessageFormat.format("Failed to create member {0}", error.getMessage()));
-                                            String errorMsg = LifeAPIErrorHandler.handleLifeAPIError(error.getMessage()).isEmpty() ? error.getMessage() : LifeAPIErrorHandler.handleLifeAPIError(error.getMessage());
+                                            String errorMsg = APIErrorHandler.handleLifeAPIError(error.getMessage()).isEmpty() ? error.getMessage() : APIErrorHandler.handleLifeAPIError(error.getMessage());
                                             return Mono.just(new APIResponse(400, "fail", "Failed to create member." + errorMsg, Instant.now()));
                                         });
                             } else {
@@ -231,7 +231,7 @@ public class LifeInsuranceService {
                                     }
                                 }).onErrorResume(error -> {
                                     LOG.error(MessageFormat.format("Failed to create beneficiary member {0}", error.getMessage()));
-                                    String errorMsg = LifeAPIErrorHandler.handleLifeAPIError(error.getMessage()).isEmpty() ? error.getMessage() : LifeAPIErrorHandler.handleLifeAPIError(error.getMessage());
+                                    String errorMsg = APIErrorHandler.handleLifeAPIError(error.getMessage()).isEmpty() ? error.getMessage() : APIErrorHandler.handleLifeAPIError(error.getMessage());
                                     return Mono.just(new APIResponse(400, "fail", "Failed to create beneficiary  member. " + errorMsg, Instant.now()));
                                 });
                     } else {
@@ -297,7 +297,7 @@ public class LifeInsuranceService {
                                     }
                                 }).onErrorResume(error -> {
                                     LOG.error(MessageFormat.format("Failed to create dependent. {0} ", error.getMessage()));
-                                    String errorMsg = LifeAPIErrorHandler.handleLifeAPIError(error.getMessage()).isEmpty() ? error.getMessage() : LifeAPIErrorHandler.handleLifeAPIError(error.getMessage());
+                                    String errorMsg = APIErrorHandler.handleLifeAPIError(error.getMessage()).isEmpty() ? error.getMessage() : APIErrorHandler.handleLifeAPIError(error.getMessage());
                                     return Mono.just(new APIResponse(400, "fail", "Failed to create dependent " + errorMsg, Instant.now()));
                                 });
                     } else {
@@ -367,7 +367,7 @@ public class LifeInsuranceService {
                                     }
                                 }).onErrorResume(error -> {
                                     LOG.error(MessageFormat.format("Failed to create extended member {0}", error.getMessage()));
-                                    String errorMsg = LifeAPIErrorHandler.handleLifeAPIError(error.getMessage()).isEmpty() ? error.getMessage() : LifeAPIErrorHandler.handleLifeAPIError(error.getMessage());
+                                    String errorMsg = APIErrorHandler.handleLifeAPIError(error.getMessage()).isEmpty() ? error.getMessage() : APIErrorHandler.handleLifeAPIError(error.getMessage());
                                     return Mono.just(new APIResponse(400, "fail", "Failed to create member. " + errorMsg, Instant.now()));
                                 });
                     } else {
@@ -432,7 +432,7 @@ public class LifeInsuranceService {
                                     }
                                 }).onErrorResume(error -> {
                                     LOG.error(MessageFormat.format("Failed to create spouse {0}", error.getMessage()));
-                                    String errorMsg = LifeAPIErrorHandler.handleLifeAPIError(error.getMessage()).isEmpty() ? error.getMessage() : LifeAPIErrorHandler.handleLifeAPIError(error.getMessage());
+                                    String errorMsg = APIErrorHandler.handleLifeAPIError(error.getMessage()).isEmpty() ? error.getMessage() : APIErrorHandler.handleLifeAPIError(error.getMessage());
                                     return Mono.just(new APIResponse(400, "fail", "Failed to create spouse. " + errorMsg, Instant.now()));
                                 });
                     } else {
@@ -497,7 +497,7 @@ public class LifeInsuranceService {
                                     }
                                 }).onErrorResume(error -> {
                                     LOG.error(MessageFormat.format("Failed to add bank details {0}", error.getMessage()));
-                                    String errorMsg = LifeAPIErrorHandler.handleLifeAPIError(error.getMessage()).isEmpty() ? error.getMessage() : LifeAPIErrorHandler.handleLifeAPIError(error.getMessage());
+                                    String errorMsg = APIErrorHandler.handleLifeAPIError(error.getMessage()).isEmpty() ? error.getMessage() : APIErrorHandler.handleLifeAPIError(error.getMessage());
                                     return Mono.just(new APIResponse(400, "fail", "Failed to add bank details. " + errorMsg, Instant.now()));
                                 });
                     } else {
