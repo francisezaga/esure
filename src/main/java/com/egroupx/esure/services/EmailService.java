@@ -38,7 +38,7 @@ public class EmailService {
     @Value("${egroupx.email.password}")
     private String emailPassword;
 
-    @Value("${egroupx.medicalAid.emailAddress}")
+    @Value("${egroupx.services.medicalAid.emailAddress}")
     private String medicalAidRecipientEmail;
 
     private final Logger LOG = LoggerFactory.getLogger(EmailService.class);
