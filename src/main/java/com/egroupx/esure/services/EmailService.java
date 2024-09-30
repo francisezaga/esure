@@ -2,6 +2,7 @@ package com.egroupx.esure.services;
 
 import com.egroupx.esure.model.EmailCustomer;
 import com.egroupx.esure.model.life.Member;
+import com.egroupx.esure.model.medical_aid.MedicalAidMemberDetails;
 import com.egroupx.esure.repository.CustomerRepository;
 import com.egroupx.esure.repository.LifeInsuranceRepository;
 import org.slf4j.Logger;
@@ -189,6 +190,88 @@ public class EmailService {
             return Mono.just("Email Send");
         }catch (MessagingException mex){
             LOG.error(MessageFormat.format("Customer onboarding email notification failed to send for user {0} error {1}",member.getEmail(),mex.getMessage()));
+            return Mono.just("Email not send");
+        }
+    }
+
+    public Mono<String> sendEmailForMedicalAid(MedicalAidMemberDetails memberDetails, String subject) {
+
+        Properties props = new Properties();
+        props.put("mail.smtp.host", emailHost);
+        props.put("mail.smtp.port", emailPort);
+        props.put("mail.smtp.auth", "true");
+
+        Session session = Session.getInstance(props,
+                new javax.mail.Authenticator() {
+                    @Override
+                    protected PasswordAuthentication getPasswordAuthentication() {
+                        return new PasswordAuthentication(emailUsername, emailPassword);
+                    }
+                });
+        try {
+            Transport transport = session.getTransport("smtp");
+
+            MimeMessage message = new MimeMessage(session); // email message
+
+            message.setFrom(new InternetAddress(senderEmail)); // setting header fields
+
+            message.addRecipient(Message.RecipientType.TO, new InternetAddress(recepientEmail));
+
+            message.setSubject(subject);
+
+            String emailAddress = memberDetails.getEmail()==null?"":memberDetails.getEmail();
+            // subject line
+            /*private int adultsCount;
+            private int childrenCount;
+            private String fullName;
+            private String email;
+            private String phoneNumber;
+            private boolean hasMedicalAid;
+            private String incomeCategory;
+            private String hospitalChoice;
+            private String hospitalRates;
+            private String dayToDayCoverLevel;
+            private String doctorChoice;
+            private boolean hasChronicMedicationRequirements;
+            private String hospitalExclusions;*/
+
+           /* String fullName = member.getCellNumber()==null?"":member.getCellNumber();
+            String emailAddress = member.getEmail()==null?"":member.getEmail();
+            String endBody = "<br><h3>Thank you</h3>"+
+                    "<br><h3>Regards</h3>"+
+                    "<body/>"+
+                    "</html>";
+
+            // actual mail body
+            message.setContent("<html><body>" +
+                            "<head>" +
+                            "<style>" +
+                            "label{ " +
+                            "font-weight:bold;"+
+                            "width:300px;"+
+                            "color:#212529;"+
+                            "}"+
+                            "</style>" +
+                            "</head>"+
+                            "<h2>Good day, there is a "+subject.toLowerCase()+" with below details</h2>"+
+                            "<label>Name:</label>" + fullName+"<br>"+
+                            "<label>ID Number:</label>" + idNumber+"<br>"+
+                            "<label>Contact Number:</label>" + number+"<br>"+
+                            "<label>Email:</label>" + emailAddress+"<br>"+
+                            endBody
+                    ,"text/html"
+            );*/
+
+            // Send message
+            transport.connect();
+            transport.sendMessage(message,
+                    message.getRecipients(Message.RecipientType.TO));
+            transport.close();
+
+            LOG.info(MessageFormat.format("Customer onboarding email notification successfully send for user {0}", emailAddress));
+            return Mono.just("Email Send");
+        }catch (MessagingException mex){
+            LOG.error(MessageFormat.format("Customer onboarding email notification failed to send for user {0} error {1}",memberDetails.getEmail(),mex.getMessage()));
             return Mono.just("Email not send");
         }
     }
