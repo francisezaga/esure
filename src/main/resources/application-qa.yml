@@ -50,7 +50,7 @@ logging:
 egroupx:
   services:
     fsp:
-      endpointUrl: https://test.fspsolutions.com
+      endpointUrl: https://www.fspsolutions.com
       apiKey: 1Am}@vdV0mJV[J4vL=k?!e+H~3=].NP2
 
     pol360:
@@ -59,6 +59,9 @@ egroupx:
       tokenUUID: 9eab086c-0dc1-4e5e-8f46-6b8e6e2a3656
       userName: damien@pol360.co.za
       password: 360API$360#
+
+    medicalAid:
+      emailAddress: chinyangaf@gmail.com
 
     namescan:
       url: https://api.namescan.io/v3

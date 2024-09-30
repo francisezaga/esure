@@ -2,22 +2,22 @@ spring:
   application:
     name: esure
     version: 1.0.0
-    description: ESure APIs
+    description: ESure APIS
     jwt:
       jwtSecret: 2D4A614E645267556B58703273357638792F423F4428472B4B6250655368566D
       jwtExpirationMs: 86400000
       jwtCookie: QPXYPUQZRE
 
   datasource:
-    url: jdbc:mariadb://102.131.62.24:3306/ezaga_dev?allowPublicKeyRetrieval=true&useSSL=false
-    username: uat_lite
-    password: 7mwDpesIYvCcpdwH
+    url: jdbc:mariadb://102.131.62.24:3306/esure_db?allowPublicKeyRetrieval=true&useSSL=false
+    username: esure_uat
+    password: qbAS7GIz3BIrC6Ioget8IxjsL
     driver-class-name: org.mariadb.jdbc.Driver
 
   r2dbc:
-    url: r2dbc:mariadb://102.131.62.24:3306/ezaga_dev?allowPublicKeyRetrieval=true&useSSL=false
-    username: uat_lite
-    password: 7mwDpesIYvCcpdwH
+    url: r2dbc:mariadb://102.131.62.24:3306/esure_db?allowPublicKeyRetrieval=true&useSSL=false
+    username: esure_uat
+    password: qbAS7GIz3BIrC6Ioget8IxjsL
 
   jpa:
     database-platform: org.hibernate.dialect.MySQL5InnoDBDialect
@@ -37,7 +37,7 @@ spring:
 
 server:
   address: 0.0.0.0
-  port: 8055
+  port: 8065
 
 logging:
   level:
@@ -47,7 +47,48 @@ logging:
           r2dbc: DEBUG
 
 
-ezaga:
+egroupx:
+  services:
+    fsp:
+      endpointUrl: https://www.fspsolutions.com
+      apiKey: 1Am}@vdV0mJV[J4vL=k?!e+H~3=].NP2
+
+    pol360:
+      endpointUrl: https://web02.pol360.co.za
+      tokenGenClientName: RoyaleCrownsFinancialServices
+      tokenUUID: 9eab086c-0dc1-4e5e-8f46-6b8e6e2a3656
+      userName: damien@pol360.co.za
+      password: 360API$360#
+
+    medicalAid:
+      emailAddress: chinyangaf@gmail.com
+
+    namescan:
+      url: https://api.namescan.io/v3
+      apiKey: 06A85DBCDCAD492B80FC3E1C18FAB4C2
+
+    marisit:
+      url: https://online.marisit.co.za
+      username: jm980514uts
+      password: JOsh078112$%&
+
+    securecitizen:
+      url: https://citizenapi.securecitizen.cloud/Citizen
+
+    otpSMS:
+      endpoint: http://102.131.60.77:8088
+
+  email:
+    host: mail.ezaga.co.za
+    port: 587
+    sender: noreply@ezaga.co.za
+    recipient: sales@esurecover.co.za
+    username: noreply@ezaga.co.za
+    password: Dv1E}^VR5L?L
+    sendEmail: true
+
+  files:
+    dir:
 
 management:
   endpoints:

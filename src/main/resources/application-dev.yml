@@ -60,6 +60,9 @@ egroupx:
       userName: damien@pol360.co.za
       password: 360API$360#
 
+    medicalAid:
+      emailAddress: chinyangaf@gmail.com
+
     namescan:
       url: https://api.namescan.io/v3
       apiKey: 06A85DBCDCAD492B80FC3E1C18FAB4C2
