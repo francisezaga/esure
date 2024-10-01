@@ -154,7 +154,6 @@ public class EmailService {
             message.setSubject(subject); // subject line
 
             String fullName = customer.getFullNames()==null?"":customer.getFullNames();
-            String idNumber = customer.getIdNumber()==null?"":customer.getIdNumber();
             Long fspQuotationRef = customer.getFspQuoteRefId()==null?-1L:customer.getFspQuoteRefId();
             Long fspPolicyRef = customer.getFspPolicyId()==null?0L:customer.getFspPolicyId();
             String code = customer.getCode()==null?"":customer.getCode();
@@ -178,7 +177,7 @@ public class EmailService {
                             "</style>" +
                             "</head>"+
                             "<h2>Hi "+fullName+"</h2>"+
-                            "<p>Welcome to eSure Life Cover!<br>Thank for registering with eSure. One of our agencies will contact you regarding your application.</h2>"+
+                            "<p><h2>Welcome to eSure Life Cover!</h2><br>Thank you for registering with eSure. One of our agencies will contact you regarding your application.<br>"+
                             "<label>Quote Ref:</label>" + fspQuotationRef+"<br>"+
                             "<label>Policy Ref:</label>" + fspPolicyRef+"<br>"+
                             "<label>Contact Number:</label>" + code+number+"<br>"+
@@ -299,7 +298,6 @@ public class EmailService {
 
             String firstName = member.getFirstName()==null?"": member.getFirstName();
             String lastName = member.getSurname()==null?"": member.getSurname();
-            String idNumber = member.getIdNumber()==null?"":member.getIdNumber();
             String fullName = firstName.concat(" ").concat(lastName);
             String number = member.getCellNumber()==null?"":member.getCellNumber();
             String emailAddress = member.getEmail()==null?"":member.getEmail();
@@ -320,7 +318,7 @@ public class EmailService {
                             "</style>" +
                             "</head>"+
                             "<h2>Hi "+fullName+"</h2>"+
-                            "<p>Welcome to eSure Life Cover!<br>Thank for registering with eSure. One of our agencies will contact you regarding your application.</h2>"+
+                            "<p><h2>Welcome to eSure Life Cover!</h2><br>Thank for you registering with eSure. One of our agencies will contact you regarding your application.<br>"+
                             "<label>Name:</label>" + fullName+"<br>"+
                             "<label>Contact Number:</label>" + number+"<br>"+
                             "<label>Email:</label>" + emailAddress+"<br>"+
