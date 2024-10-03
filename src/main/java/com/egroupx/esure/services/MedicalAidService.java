@@ -59,7 +59,10 @@ public class MedicalAidService {
     Mono<String> sendEmailLifeCoverNotification(String phoneNumber) {
         return  medicalAidRepository.findMedicalAidRecordByPhoneNumber(phoneNumber)
                 .flatMap(member -> {
-                    return emailService.sendEmailForMedicalAid(member, "New eSure Request To Open A Medical Aid").flatMap(Mono::just);
+                    return emailService.sendEmailForMedicalAid(member, "New eSure Request To Open A Medical Aid").flatMap(msg->{
+                       return emailService.sendWelcomeEmailForMedicalAid(member,"Welcome To eSure Medical Aid").flatMap(Mono::just);
+                    });
+
                 }).onErrorResume(err -> {
                     LOG.error(MessageFormat.format("Failed to send email for medical aid ref {0}. Error {1}", phoneNumber, err.getMessage()));
                     return Mono.just("Failed to send email");

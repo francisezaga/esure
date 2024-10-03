@@ -306,7 +306,7 @@ public class PolicyService {
                         }
                         customer.setInstructions(instructions);
                     }
-                    return emailService.sendEmail(customer, "New Esure Policy")
+                    return emailService.sendEmail(customer, "New eSure Insurance Policy")
                             .flatMap(email-> emailService.sendInsuranceWelcomeEmail(customer,"Welcome To eSure Insurance")
                                         .flatMap(Mono::just)
                             );
@@ -315,6 +315,4 @@ public class PolicyService {
                     return Mono.just("Failed to send email");
                 });
     }
-
-
 }

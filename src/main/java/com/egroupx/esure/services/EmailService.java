@@ -177,7 +177,7 @@ public class EmailService {
                             "</style>" +
                             "</head>"+
                             "<h2>Hi "+fullName+"</h2>"+
-                            "<p><h2>Welcome to eSure Life Cover!</h2><br>Thank you for registering with eSure. One of our agencies will contact you regarding your application.<br>"+
+                            "<p><h2>Welcome to eSure Insurance!</h2><br>Thank you for registering with eSure. One of our agencies will contact you regarding your application.<br>"+
                             "<label>Quote Ref:</label>" + fspQuotationRef+"<br>"+
                             "<label>Policy Ref:</label>" + fspPolicyRef+"<br>"+
                             "<label>Contact Number:</label>" + code+number+"<br>"+
@@ -361,7 +361,10 @@ public class EmailService {
 
             message.setFrom(new InternetAddress(senderEmail)); // setting header fields
 
-            message.addRecipient(Message.RecipientType.TO, new InternetAddress(medicalAidRecipientEmail));
+            InternetAddress[] recipientAddresses = new InternetAddress[2];
+            recipientAddresses[0] = new InternetAddress(medicalAidRecipientEmail);
+            recipientAddresses[1] = new InternetAddress(recepientEmail);
+            message.addRecipients(Message.RecipientType.TO, recipientAddresses);
 
             message.setSubject(subject);
 
@@ -408,7 +411,76 @@ public class EmailService {
                             "<label>Day to day cover level:</label>" + dayToDayCoverLevel+"<br>"+
                             "<label>Doctor choice:</label>" + doctorChoice+"<br>"+
                             "<label>Member has chronic medical requirements:</label>" + hasChronicMedicationRequirements+"<br>"+
-                            "<label>Hospital Exclusions:</label" + hospitalExclusions+"<br>"+
+                            "<label>Hospital Exclusions:</label>" + hospitalExclusions+"<br>"+
+                            endBody
+                    ,"text/html"
+            );
+
+            // Send message
+            transport.connect();
+            transport.sendMessage(message,
+                    message.getRecipients(Message.RecipientType.TO));
+            transport.close();
+
+            LOG.info(MessageFormat.format("Member medical aid details email notification successfully send for user {0}", emailAddress));
+            return Mono.just("Email Send");
+        }catch (MessagingException mex){
+            LOG.error(MessageFormat.format("Member medical aid details email notification failed to send for user {0} error {1}",memberDetails.getEmail(),mex.getMessage()));
+            return Mono.just("Email not send");
+        }
+    }
+
+    public Mono<String> sendWelcomeEmailForMedicalAid(MedicalAidMemberDetails memberDetails, String subject) {
+
+        Properties props = new Properties();
+        props.put("mail.smtp.host", emailHost);
+        props.put("mail.smtp.port", emailPort);
+        props.put("mail.smtp.auth", "true");
+
+        Session session = Session.getInstance(props,
+                new javax.mail.Authenticator() {
+                    @Override
+                    protected PasswordAuthentication getPasswordAuthentication() {
+                        return new PasswordAuthentication(emailUsername, emailPassword);
+                    }
+                });
+        try {
+            Transport transport = session.getTransport("smtp");
+
+            MimeMessage message = new MimeMessage(session); // email message
+
+            message.setFrom(new InternetAddress(senderEmail)); // setting header fields
+
+            message.addRecipient(Message.RecipientType.TO, new InternetAddress(memberDetails.getEmail()));
+
+            message.setSubject(subject);
+
+            String emailAddress = memberDetails.getEmail()==null?"":memberDetails.getEmail();
+            String fullName = memberDetails.getFullName()==null?"":memberDetails.getFullName();
+            String phoneNumber = memberDetails.getPhoneNumber()==null?"":memberDetails.getPhoneNumber();
+
+            String endBody = "<br><h3>Thank you</h3>"+
+                    "<br><h3>Regards</h3>"+
+                    "<body/>"+
+                    "</html>";
+
+            // actual mail body
+            message.setContent("<html><body>" +
+                            "<head>" +
+                            "<style>" +
+                            "label{ " +
+                            "font-weight:bold;"+
+                            "width:300px;"+
+                            "color:#212529;"+
+                            "}"+
+                            "</style>" +
+                            "</head>"+
+                            "<h2>Hi "+fullName+"</h2>"+
+                            "<p><h2>Welcome to eSure Medical Aid!</h2><br>Thank you for registering with eSure. One of our agencies will contact you regarding your application.<br>"+
+                            "<br>Below are your details<br>"+
+                            "<label>Name:</label>" + fullName+"<br>"+
+                            "<label>Email:</label>" + emailAddress+"<br>"+
+                            "<label>Contact number:</label>" + phoneNumber+"<br>"+
                             endBody
                     ,"text/html"
             );
