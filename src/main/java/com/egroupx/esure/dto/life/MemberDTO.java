@@ -16,6 +16,8 @@ public class MemberDTO {
     @JsonAlias("agentCode")
     @JsonProperty("AgentCode")
     private String agentCode;
+    @JsonProperty("egroupxAgentId")
+    private String egroupxAgentId;
     @JsonAlias("policyNumber")
     @JsonProperty("PolicyNumber")
     private String policyNumber;
