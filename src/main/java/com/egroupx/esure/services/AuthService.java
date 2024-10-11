@@ -48,12 +48,8 @@ public class AuthService {
         final String otpCode = generateOTPCode();
         String message = " \n" +
                 "Hello, \n" +
-                " \n" +
-                "\n" +
-                "Thank you for your interest in eSure. (eSure is a Juristic Representative of Royale Crowns Financial Services, an authorized Financial Services Provider, FSP No.: 52845). \n" +
-                " \n" +
-                "\n" +
-                "Your OTP is"+otpCode+". Please enter it on the website now to complete your verification";
+                "Thank you for your interest in eSure.\n"+
+                "Your OTP is"+otpCode+". Please enter it on the website now";
         return retrieveOTPDetailsAndSendOTPSms(cellNumber,message).flatMap(apiRes->{
             if(apiRes.getStatus()==200){
                 return saveOTPDetails(cellNumber.trim(),LocalDateTime.now(),"",otpCode.trim())

@@ -170,7 +170,7 @@ public class EmailService {
                     "<body style=\"font-family: Arial, sans-serif; line-height: 1.6; color: #333;\">\n" +
                     "    <p>Hi "+fullName+",</p>\n" +
                     "\n" +
-                    "    <p>Thank you for submitting your information. Your financial security is our top priority, and we’re here to guide you every step of the way.</p>\n" +
+                    "    <p>Thank you for submitting your information. Your financial security is our top priority, and we are here to guide you every step of the way.</p>\n" +
                     "\n" +
                     "    <h3>Next Steps:</h3>\n" +
                     "    <p>One of our dedicated agents will be in touch soon to discuss your application and ensure you have everything you need.</p>\n" +
@@ -396,38 +396,114 @@ public class EmailService {
             String isNetIncomeMoreThan14k = memberDetails.isNetIncomeMoreThan14k()?"Yes":"No";
             String hasOrDependentHasChronicMedicationRequirements = memberDetails.isMemberOrDependentHasChronicMedRequirements()?"Yes":"No";
 
-            String medicalAidProvider = memberDetails.isHasMedicalAid()?"<p><strong>Name Of Medical Aid Provider:</strong> "+nameOfMedicalAidProvider+"</p>\n":"";
+            String medicalAidProviderElem = memberDetails.isHasMedicalAid()?"<h3>Medical Aid Provider:</h3><p class=\"highlight\">"+nameOfMedicalAidProvider+"</p>\n":"";
 
             String body =  "<!DOCTYPE html>\n" +
                     "<html lang=\"en\">\n" +
                     "<head>\n" +
                     "    <meta charset=\"UTF-8\">\n" +
                     "    <meta name=\"viewport\" content=\"width=device-width, initial-scale=1.0\">\n" +
-                    "    <title>Customer Support Request</title>\n" +
+                    "    <title>eSure Medical Aid Lead</title>\n" +
+                    "    <style>\n" +
+                    "        body {\n" +
+                    "            font-family: Arial, sans-serif;\n" +
+                    "            margin: 0;\n" +
+                    "            padding: 0;\n" +
+                    "            background-color: #f9f9f9;\n" +
+                    "        }\n" +
+                    "        .email-container {\n" +
+                    "            margin: 0 auto;\n" +
+                    "            background-color: #fff;\n" +
+                    "        }\n" +
+                    "        .header {\n" +
+                    "            font-size: 20px;\n" +
+                    "            font-weight: bold;\n" +
+                    "            margin-bottom: 20px;\n" +
+                    "        }\n" +
+                    "        .content {\n" +
+                    "            font-size: 14px;\n" +
+                    "            line-height: 1.6;\n" +
+                    "            color: #333;\n" +
+                    "        }\n" +
+                    "        .content h3 {\n" +
+                    "            font-size: 16px;\n" +
+                    "            font-weight: bold;\n" +
+                    "            margin-top: 10px;\n" +
+                    "        }\n" +
+                    "        .content p {\n" +
+                    "            margin: 5px 0;\n" +
+                    "        }\n" +
+                    "        .highlight {\n" +
+                    "        }\n" +
+                    "        .footer {\n" +
+                    "            margin-top: 30px;\n" +
+                    "            font-size: 12px;\n" +
+                    "            color: #999;\n" +
+                    "            text-align: center;\n" +
+                    "        }\n" +
+                    "        .esure-logo {\n" +
+                    "            color: #b6c634;\n" +
+                    "            font-weight: bold;\n" +
+                    "        }\n" +
+                    "    </style>\n" +
                     "</head>\n" +
-                    "<body style=\"font-family: Arial, sans-serif; line-height: 1.6; color: #333;\">\n" +
-                    "    <p>Dear "+receiverName+",</p>\n" +
+                    "<body>\n" +
                     "\n" +
-                    "    <p>Please find the details of a customer who requires follow-up support:</p>\n" +
+                    "    <div class=\"email-container\">\n" +
+                    "        <div class=\"header\">\n" +
+                    "            Dear "+receiverName+",\n" +
+                    "        </div>\n" +
+                    "        <div class=\"content\">\n" +
+                    "            <p>We have received a new Medical Aid lead from eSure. Please find the customer's details below:</p>\n" +
                     "\n" +
-                    "   <p><strong>Full Name:</strong> "+fullName+"</p>\n" +
-                    "   <p><strong>Contact Number:</strong> "+phoneNumber+"</p>\n" +
-                    "   <p><strong>Email Address:</strong> <a href=\"mailto:"+emailAddress+"+\">"+emailAddress+"</a></p></li>\n" +
-                    "   <p><strong>Date of birth:</strong> "+dateOfBirth+"</p>\n" +
-                    "   <p><strong>Number of adults:</strong> "+adultsCount+"</p>\n"+
-                    "   <p><strong>Number of children:</strong> "+childrenCount+"</p>\n" +
-                    "   <p><strong>Member Has Medical Aid:</strong> "+hasMedicalAid+"</p>\n" +
-                        medicalAidProvider+
-                    "   <p><strong>Income Before Deductions More than R14 000.00:</strong> "+isGrossIncomeMoreThan14k+"</p>\n" +
-                    "   <p><strong>Amount Budgeted For Medical Cover:</strong> R"+budgetedAmount+"</p>\n" +
-                    "   <p><strong>Main Medical Priority:</strong> "+medicalPriority+"</p>\n" +
-                    "   <p><strong>Member Or Dependent Has Chronic Requirements:</strong> "+hasOrDependentHasChronicMedicationRequirements+"</p>\n" +
-                    "    <p>Kindly reach out to the customer directly to assist with their query or concern. Please ensure a prompt response to ensure their needs are met. Thank you for your support and attention to this matter.</p>\n" +
+                    "            <p><strong>Name:</strong></p>\n" +
+                    "            <p class=\"highlight\">"+fullName+"</p>\n" +
                     "\n" +
-                    "    <p>Best regards,<br>\n" +
-                    "    eSure Team</p>\n" +
+                    "            <h3>Number of adults:</h3>\n" +
+                    "            <p class=\"highlight\">"+adultsCount+"</p>\n" +
+                    "\n" +
+                    "            <h3>Number of children:</h3>\n" +
+                    "            <p class=\"highlight\">"+childrenCount+"</p>\n" +
+                    "\n" +
+                    "            <h3>Date of birth:</h3>\n" +
+                    "            <p class=\"highlight\">"+dateOfBirth+"</p>\n" +
+                    "\n" +
+                    "            <h3>Email Address:</h3>\n" +
+                    "            <p class=\"highlight\">"+emailAddress+"</p>\n" +
+                    "\n" +
+                    "            <h3>Phone Number:</h3>\n" +
+                    "            <p class=\"highlight\">"+phoneNumber+"</p>\n" +
+                    "\n" +
+                    "            <h3>Has Medical Aid:</h3>\n" +
+                    "            <p class=\"highlight\">"+hasMedicalAid+"</p>\n" +
+                    "\n" +
+                    medicalAidProviderElem
+                    +
+                    "            <h3>Income Before Deductions > R:14 000.00</h3>\n" +
+                    "            <p class=\"highlight\">"+isGrossIncomeMoreThan14k+"</p>\n" +
+                    "\n" +
+                    "            <h3>Budget for Medical Cover:</h3>\n" +
+                    "            <p class=\"highlight\">R"+budgetedAmount+"</p>\n" +
+                    "\n" +
+                    "            <h3>Main Medical Priority:</h3>\n" +
+                    "            <p class=\"highlight\">"+medicalPriority+"</p>\n" +
+                    "\n" +
+                    "            <h3>Chronic Requirements:</h3>\n" +
+                    "            <p class=\"highlight\">"+hasOrDependentHasChronicMedicationRequirements+"</p>\n" +
+                    "\n" +
+                    "            <p>Please reach out to assist the customer with their Medical Aid needs.</p>\n" +
+                    "\n" +
+                    "            <p>Best regards,</p>\n" +
+                    "            <p class=\"highlight\">eSure Team</p>\n" +
+                    "\n" +
+                    "            <div class=\"footer\">\n" +
+                    "                <p><span class=\"esure-logo\">eSure</span> is a Juristic Representative of Royale Crowns Financial Services, an authorized Financial Services Provider (FSP No.: 52845). All insurance products and services are offered under the regulatory framework of Royale Crowns Financial Services.</p>\n" +
+                    "            </div>\n" +
+                    "        </div>\n" +
+                    "    </div>\n" +
+                    "\n" +
                     "</body>\n" +
-                    "</html>\n";;
+                    "</html>\n";
 
             // actual mail body
             message.setContent(body,"text/html"
@@ -489,7 +565,7 @@ public class EmailService {
                     "  \n" +
                     "  <p>Welcome to eSure Medical Aid!</p>\n" +
                     "  \n" +
-                    "  <p>Thank you for submitting your request with eSure. One of our customer support agents will be in touch shortly to complete your application.</p>\n" +
+                    "  <p>Thank you for submitting your request with eSure. One of our dedicated agents will be in touch shortly to complete your application.</p>\n" +
                     "  \n" +
                     "  <p>For immediate assistance, feel free to reach out to our support team:</p>\n" +
                     "  \n" +
@@ -501,9 +577,9 @@ public class EmailService {
                     "  \n" +
                     "  <p>Thank you,</p>\n" +
                     "  \n" +
-                    "  <p>The eSure Team</p>\n" +
+                    "  <p><strong>The eSure Team</strong></p>\n" +
                     "  \n" +
-                    "  <p><small>eSure is a Juristic Representative of Royale Crowns Financial Services, an authorized Financial Services Provider (FSP No.: 52845). All insurance products are regulated under Royale Crowns Financial Services.</small></p>\n" +
+                    "  <p><small><i>eSure is a Juristic Representative of Royale Crowns Financial Services, an authorized Financial Services Provider (FSP No.: 52845). All insurance products are regulated under Royale Crowns Financial Services.</small></i></p>\n" +
                     "</body>\n" +
                     "</html>\n";
 
