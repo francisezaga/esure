@@ -318,8 +318,13 @@ public class QuotationService {
             }
         }
         return customerService.sendEmailQuotationNotification(quoteRes.getId())
-                .then(Mono.just("next"))
-                .flatMap(msg->Mono.just("Completed processing quotation details"));
+                .then(Mono.just("quotation email"))
+                .flatMap(msg->Mono.just("Completed processing quotation details"))
+                .then(Mono.just("quotation welcome email"))
+                .flatMap(msg->{
+                    return customerService.sendEmailFSPCustomerWelcomeNotification(quoteRes.getId());
+             });
+
 
     }
 

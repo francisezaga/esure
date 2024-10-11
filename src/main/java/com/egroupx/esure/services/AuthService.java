@@ -46,7 +46,14 @@ public class AuthService {
 
    public Mono<ResponseEntity<APIResponse>> verifyUserCellNumber(String cellNumber){
         final String otpCode = generateOTPCode();
-        String message = "eSure otp: "+ otpCode;
+        String message = " \n" +
+                "Hello, \n" +
+                " \n" +
+                "\n" +
+                "Thank you for your interest in eSure. (eSure is a Juristic Representative of Royale Crowns Financial Services, an authorized Financial Services Provider, FSP No.: 52845). \n" +
+                " \n" +
+                "\n" +
+                "Your OTP is"+otpCode+". Please enter it on the website now to complete your verification";
         return retrieveOTPDetailsAndSendOTPSms(cellNumber,message).flatMap(apiRes->{
             if(apiRes.getStatus()==200){
                 return saveOTPDetails(cellNumber.trim(),LocalDateTime.now(),"",otpCode.trim())

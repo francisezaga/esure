@@ -1,13 +1,12 @@
 package com.egroupx.esure.services;
 
-
-import com.egroupx.esure.dto.life.MemberDTO;
 import com.egroupx.esure.model.medical_aid.MedicalAidMemberDetails;
 import com.egroupx.esure.model.responses.api.APIResponse;
 import com.egroupx.esure.repository.MedicalAidRepository;
-import com.egroupx.esure.util.AppUtil;
+
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 import reactor.core.publisher.Mono;
@@ -17,6 +16,13 @@ import java.time.Instant;
 
 @Service
 public class MedicalAidService {
+
+
+    @Value("${egroupx.services.medicalAid.pfisterEmailAddress}")
+    private String pfisterEmailAddress;
+
+    @Value("${egroupx.services.medicalAid.esureEmailAddress}")
+    private String esureEmailAddress;
 
     private final MedicalAidRepository medicalAidRepository;
 
@@ -35,34 +41,34 @@ public class MedicalAidService {
         return medicalAidRepository.findMedicalAidRecordByPhoneNumber(memberDetails.getPhoneNumber())
                 .flatMap(member -> {
                     LOG.info(MessageFormat.format("Medical aid member already exist. {0}", memberDetails.getPhoneNumber()));
-                    return Mono.just(ResponseEntity.badRequest().body(new APIResponse(400,"fail","Medical aid member details already exist",Instant.now())));
+                    return Mono.just(ResponseEntity.badRequest().body(new APIResponse(400, "fail", "Medical aid member details already exist", Instant.now())));
                 })
                 .switchIfEmpty(Mono.defer(() -> {
                     LOG.error(MessageFormat.format("Medical aid member does not exist {0}. Saving member ", memberDetails.getPhoneNumber()));
-                    return medicalAidRepository.saveMedicalAidDetails(memberDetails.getAdultsCount(),memberDetails.getChildrenCount(),memberDetails.getFullName(),memberDetails.getEmail(),memberDetails.getPhoneNumber(), memberDetails.isHasMedicalAid(),memberDetails.getIncomeCategory(),memberDetails.getHospitalChoice(),memberDetails.getHospitalRates(),memberDetails.getDayToDayCoverLevel(),memberDetails.getDoctorChoice(),memberDetails.isHasChronicMedicationRequirements(),memberDetails.getHospitalExclusions()).then(Mono.just("next"))
+                    return medicalAidRepository.saveMedicalAidDetails(memberDetails.getAdultsCount(), memberDetails.getChildrenCount(), memberDetails.getFirstName(), memberDetails.getLastName(), memberDetails.getEmail(), memberDetails.getPhoneNumber(), memberDetails.getDateOfBirth(), memberDetails.isHasMedicalAid(), memberDetails.getNameOfMedicalAidProvider(), memberDetails.isGrossIncomeMoreThan14K(), memberDetails.getBudgetedAmount(), memberDetails.getMedicalPriority(), memberDetails.isNetIncomeMoreThan14k(), memberDetails.isMemberOrDependentHasChronicMedRequirements()).then(Mono.just("next"))
                             .flatMap(msg -> {
                                 LOG.info(MessageFormat.format("Completed saving medical aid member personal details {0}", memberDetails.getPhoneNumber()));
-                                return sendEmailLifeCoverNotification(memberDetails.getPhoneNumber()).flatMap(res-> {
-                                    return Mono.just(ResponseEntity.ok().body(new APIResponse(200,"success","Medical aid details saved",Instant.now())));
+                                return sendEmailLifeCoverNotification(memberDetails.getPhoneNumber()).flatMap(res -> {
+                                    return Mono.just(ResponseEntity.ok().body(new APIResponse(200, "success", "Medical aid details saved", Instant.now())));
                                 });
                             }).onErrorResume(err -> {
                                 LOG.error(MessageFormat.format("Failed to save medical aid details. Error {0}", err.getMessage()));
-                                return Mono.just(ResponseEntity.ok().body(new APIResponse(400,"fail","Failed to save medical aid details",Instant.now())));
+                                return Mono.just(ResponseEntity.ok().body(new APIResponse(400, "fail", "Failed to save medical aid details", Instant.now())));
                             });
                 }))
                 .onErrorResume(err -> {
                     LOG.error(MessageFormat.format("Failed to save medical aid member details. Error {0}", err.getMessage()));
-                    return Mono.just(ResponseEntity.ok().body(new APIResponse(400,"fail","Failed to save medical aid details",Instant.now())));
+                    return Mono.just(ResponseEntity.ok().body(new APIResponse(400, "fail", "Failed to save medical aid details", Instant.now())));
                 });
     }
 
     Mono<String> sendEmailLifeCoverNotification(String phoneNumber) {
-        return  medicalAidRepository.findMedicalAidRecordByPhoneNumber(phoneNumber)
+        return medicalAidRepository.findMedicalAidRecordByPhoneNumber(phoneNumber)
                 .flatMap(member -> {
-                    return emailService.sendEmailForMedicalAid(member, "New eSure Request To Open A Medical Aid").flatMap(msg->{
-                       return emailService.sendWelcomeEmailForMedicalAid(member,"Welcome To eSure Medical Aid").flatMap(Mono::just);
-                    });
-
+                    return emailService.sendQuotationEmailForMedicalAid(member, "New Medical Aid Lead from eSure", "Pfister Agent",pfisterEmailAddress)
+                            .flatMap(Mono::just).then(Mono.just("Send email to esure call center"))
+                            .flatMap(esure -> emailService.sendQuotationEmailForMedicalAid(member, "New Medical Aid Lead from eSure", "eSure Medical Aid Support",esureEmailAddress))
+                            .then(Mono.just("Send welcome email to customer")).flatMap(welcome -> emailService.sendWelcomeEmailForMedicalAid(member, "Welcome to eSure Medical Aid! - We're Excited to Have You").flatMap(Mono::just));
                 }).onErrorResume(err -> {
                     LOG.error(MessageFormat.format("Failed to send email for medical aid ref {0}. Error {1}", phoneNumber, err.getMessage()));
                     return Mono.just("Failed to send email");

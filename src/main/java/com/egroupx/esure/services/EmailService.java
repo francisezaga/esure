@@ -15,6 +15,7 @@ import javax.mail.*;
 import javax.mail.internet.InternetAddress;
 import javax.mail.internet.MimeMessage;
 import java.text.MessageFormat;
+import java.time.LocalDate;
 import java.util.Properties;
 
 @Service
@@ -38,8 +39,11 @@ public class EmailService {
     @Value("${egroupx.email.password}")
     private String emailPassword;
 
-    @Value("${egroupx.services.medicalAid.emailAddress}")
-    private String medicalAidRecipientEmail;
+    @Value("${egroupx.services.medicalAid.pfisterEmailAddress}")
+    private String pfisterEmailAddress;
+
+    @Value("${egroupx.services.medicalAid.esureEmailAddress}")
+    private String esureEmailAddress;
 
     private final Logger LOG = LoggerFactory.getLogger(EmailService.class);
 
@@ -53,7 +57,7 @@ public class EmailService {
     }
 
 
-    public Mono<String> sendEmail(EmailCustomer customer, String subject) {
+    public Mono<String> sendQuotationNotificationEmail(EmailCustomer customer, String subject) {
 
        Properties props = new Properties();
         props.put("mail.smtp.host", emailHost);
@@ -79,38 +83,38 @@ public class EmailService {
             message.setSubject(subject); // subject line
 
             String fullName = customer.getFullNames()==null?"":customer.getFullNames();
-            String idNumber = customer.getIdNumber()==null?"":customer.getIdNumber();
             Long fspQuotationRef = customer.getFspQuoteRefId()==null?-1L:customer.getFspQuoteRefId();
-            Long fspPolicyRef = customer.getFspPolicyId()==null?0L:customer.getFspPolicyId();
             String code = customer.getCode()==null?"":customer.getCode();
             String number = customer.getNumber()==null?"":customer.getNumber();
             String emailAddress = customer.getLine_1()==null?"":customer.getLine_1();
-            String endBody = "<br><h3>Thank you</h3>"+
-                    "<br><h3>Regards</h3>"+
-                    "<body/>"+
-                    "</html>";
-            String optionalEndBody = customer.getInstructions()==null?endBody:"<label>Additional Info:</label>" + customer.getInstructions()+endBody;
-
+            String cellNumber = code+number;
+            String body = "<!DOCTYPE html>\n" +
+                    "<html lang=\"en\">\n" +
+                    "<head>\n" +
+                    "    <meta charset=\"UTF-8\">\n" +
+                    "    <meta name=\"viewport\" content=\"width=device-width, initial-scale=1.0\">\n" +
+                    "    <title>Customer Support Request</title>\n" +
+                    "</head>\n" +
+                    "<body style=\"font-family: Arial, sans-serif; line-height: 1.6; color: #333;\">\n" +
+                    "    <p>Dear eSure Support Team,</p>\n" +
+                    "\n" +
+                    "    <p>Please find the details of a customer who requires follow-up support:</p>\n" +
+                    "\n" +
+                    "<ul>"+
+                    "   <li> <p><strong>Name:</strong> "+fullName+"</p></li>\n" +
+                    "   <li> <p><strong>Contact Number:</strong> "+cellNumber+"</p></li>\n" +
+                    "   <li> <p><strong>Email Address:</strong> <a href=\"mailto:"+emailAddress+"+\">"+emailAddress+"</a></p></li>\n" +
+                    "   <li> <p><strong>Quote ref:</strong> "+fspQuotationRef+"</li>"+
+                    "</ul>"+
+                    "\n" +
+                    "    <p>Kindly reach out to the customer directly to assist with their query or concern. Please ensure a prompt response to ensure their needs are met. Thank you for your support and attention to this matter.</p>\n" +
+                    "\n" +
+                    "    <p>Best regards,<br>\n" +
+                    "    eSure Team</p>\n" +
+                    "</body>\n" +
+                    "</html>\n";
             // actual mail body
-            message.setContent("<html><body>" +
-                    "<head>" +
-                    "<style>" +
-                    "label{ " +
-                    "font-weight:bold;"+
-                    "width:300px;"+
-                    "color:#212529;"+
-                    "}"+
-                    "</style>" +
-                    "</head>"+
-                    "<h2>Good day, there is a "+subject.toLowerCase()+" with below details</h2>"+
-                    "<label>Name:</label>" + fullName+"<br>"+
-                    "<label>ID Number:</label>" + idNumber+"<br>"+
-                    "<label>FSP Quote Ref:</label>" + fspQuotationRef+"<br>"+
-                    "<label>FSP Policy Ref:</label>" + fspPolicyRef+"<br>"+
-                    "<label>Contact Number:</label>" + code+number+"<br>"+
-                    "<label>Email:</label>" + emailAddress+"<br>"+
-                    optionalEndBody
-                    ,"text/html"
+            message.setContent(body,"text/html"
             );
 
             // Send message
@@ -128,7 +132,7 @@ public class EmailService {
     }
 
 
-    public Mono<String> sendInsuranceWelcomeEmail(EmailCustomer customer, String subject) {
+    public Mono<String> sendFSPInsuranceWelcomeEmail(EmailCustomer customer, String subject) {
 
         Properties props = new Properties();
         props.put("mail.smtp.host", emailHost);
@@ -155,35 +159,47 @@ public class EmailService {
 
             String fullName = customer.getFullNames()==null?"":customer.getFullNames();
             Long fspQuotationRef = customer.getFspQuoteRefId()==null?-1L:customer.getFspQuoteRefId();
-            Long fspPolicyRef = customer.getFspPolicyId()==null?0L:customer.getFspPolicyId();
-            String code = customer.getCode()==null?"":customer.getCode();
-            String number = customer.getNumber()==null?"":customer.getNumber();
             String emailAddress = customer.getLine_1()==null?"":customer.getLine_1();
-            String endBody = "<br><h3>Thank you</h3>"+
-                    "<br><h3>Regards</h3>"+
-                    "<body/>"+
-                    "</html>";
-            String optionalEndBody = customer.getInstructions()==null?endBody:"<label>Additional Info:</label>" + customer.getInstructions()+endBody;
+            String emailBody = "<!DOCTYPE html>\n" +
+                    "<html lang=\"en\">\n" +
+                    "<head>\n" +
+                    "    <meta charset=\"UTF-8\">\n" +
+                    "    <meta name=\"viewport\" content=\"width=device-width, initial-scale=1.0\">\n" +
+                    "    <title>Email</title>\n" +
+                    "</head>\n" +
+                    "<body style=\"font-family: Arial, sans-serif; line-height: 1.6; color: #333;\">\n" +
+                    "    <p>Hi "+fullName+",</p>\n" +
+                    "\n" +
+                    "    <p>Thank you for submitting your information. Your financial security is our top priority, and we’re here to guide you every step of the way.</p>\n" +
+                    "\n" +
+                    "    <h3>Next Steps:</h3>\n" +
+                    "    <p>One of our dedicated agents will be in touch soon to discuss your application and ensure you have everything you need.</p>\n" +
+                    "\n" +
+                    "    <h3>Your Details:</h3>\n" +
+                    "    <p><ul><li><strong>Quote Ref:</strong>"+fspQuotationRef+"</li></ul></p>\n" +
+                    "\n" +
+                    "    <p>Please contact our customer support centre on:</p>\n" +
+                    "\n" +
+                    "    <ul>\n" +
+                    "        <li>Phone: 010 006 7394</li>\n" +
+                    "        <li>Email: <a href=\"mailto:support@esurecover.co.za\">support@esurecover.co.za</a></li>\n" +
+                    "        <li>WhatsApp support: 068 148 8912</li>\n" +
+                    "    </ul>\n" +
+                    "\n" +
+                    "    <p>We appreciate your trust in us and look forward to helping you protect what matters most.</p>\n" +
+                    "\n" +
+                    "    <p>Best regards,<br>\n" +
+                    "    The eSure Team<br>\n" +
+                    "    <b>Insuring Your Tomorrow, Today</b></p>\n" +
+                    "\n" +
+                    "    <footer style=\"font-size: 0.9em; color: #777;\">\n" +
+                    "        <p><i>eSure is a Juristic Representative of Royale Crowns Financial Services, an authorised Financial Services Provider (FSP No.: 52845). All insurance products and services are offered under the regulatory framework of Royale Crowns Financial Services.</i></p>\n" +
+                    "    </footer>\n" +
+                    "</body>\n" +
+                    "</html>\n";
 
             // actual mail body
-            message.setContent("<html><body>" +
-                            "<head>" +
-                            "<style>" +
-                            "label{ " +
-                            "font-weight:bold;"+
-                            "width:300px;"+
-                            "color:#212529;"+
-                            "}"+
-                            "</style>" +
-                            "</head>"+
-                            "<h2>Hi "+fullName+"</h2>"+
-                            "<p><h2>Welcome to eSure Insurance!</h2><br>Thank you for registering with eSure. One of our agencies will contact you regarding your application.<br>"+
-                            "<label>Quote Ref:</label>" + fspQuotationRef+"<br>"+
-                            "<label>Policy Ref:</label>" + fspPolicyRef+"<br>"+
-                            "<label>Contact Number:</label>" + code+number+"<br>"+
-                            "<label>Email:</label>" + emailAddress+"<br>"+
-                            optionalEndBody
-                    ,"text/html"
+            message.setContent(emailBody,"text/html"
             );
 
             // Send message
@@ -340,7 +356,7 @@ public class EmailService {
         }
     }
 
-    public Mono<String> sendEmailForMedicalAid(MedicalAidMemberDetails memberDetails, String subject) {
+    public Mono<String> sendQuotationEmailForMedicalAid(MedicalAidMemberDetails memberDetails, String subject,String receiverName,String recepientEmail) {
 
         Properties props = new Properties();
         props.put("mail.smtp.host", emailHost);
@@ -360,60 +376,61 @@ public class EmailService {
             MimeMessage message = new MimeMessage(session); // email message
 
             message.setFrom(new InternetAddress(senderEmail)); // setting header fields
-
-            InternetAddress[] recipientAddresses = new InternetAddress[2];
-            recipientAddresses[0] = new InternetAddress(medicalAidRecipientEmail);
-            recipientAddresses[1] = new InternetAddress(recepientEmail);
-            message.addRecipients(Message.RecipientType.TO, recipientAddresses);
+            message.addRecipient(Message.RecipientType.TO, new InternetAddress(recepientEmail));
 
             message.setSubject(subject);
 
-            String emailAddress = memberDetails.getEmail()==null?"":memberDetails.getEmail();
             int adultsCount = memberDetails.getAdultsCount();
             int childrenCount = memberDetails.getChildrenCount();
-            String fullName = memberDetails.getFullName()==null?"":memberDetails.getFullName();
+            String firstName = memberDetails.getFirstName()==null?"":memberDetails.getFirstName();
+            String lastName = memberDetails.getLastName()==null?"":memberDetails.getLastName();
+            String fullName = firstName.concat(" ").concat(lastName);
+            String dateOfBirth =  memberDetails.getDateOfBirth()==null?"":memberDetails.getDateOfBirth().toString();
+            String emailAddress = memberDetails.getEmail()==null?"":memberDetails.getEmail();
             String phoneNumber = memberDetails.getPhoneNumber()==null?"":memberDetails.getPhoneNumber();
-            boolean hasMedicalAid = memberDetails.isHasMedicalAid();
-            String incomeCategory = memberDetails.getIncomeCategory()==null?"":memberDetails.getIncomeCategory();
-            String hospitalChoice = memberDetails.getHospitalChoice()==null?"":memberDetails.getHospitalChoice();
-            String hospitalRates = memberDetails.getHospitalRates()==null?"":memberDetails.getHospitalRates();
-            String dayToDayCoverLevel = memberDetails.getDayToDayCoverLevel()==null?"":memberDetails.getDayToDayCoverLevel();
-            String doctorChoice = memberDetails.getDoctorChoice()==null?"":memberDetails.getDoctorChoice();
-            boolean hasChronicMedicationRequirements = memberDetails.isHasChronicMedicationRequirements();
-            String hospitalExclusions = memberDetails.getHospitalExclusions()==null?"":memberDetails.getHospitalExclusions();
+            String hasMedicalAid = memberDetails.isHasMedicalAid()?"Yes":"No";
+            String nameOfMedicalAidProvider = memberDetails.getNameOfMedicalAidProvider()==null?"":memberDetails.getNameOfMedicalAidProvider();
+            String isGrossIncomeMoreThan14k = memberDetails.isGrossIncomeMoreThan14K()?"Yes":"No";
+            String budgetedAmount = memberDetails.getBudgetedAmount()==null?"":memberDetails.getBudgetedAmount();
+            String medicalPriority = memberDetails.getMedicalPriority()==null?"":memberDetails.getMedicalPriority();
+            String isNetIncomeMoreThan14k = memberDetails.isNetIncomeMoreThan14k()?"Yes":"No";
+            String hasOrDependentHasChronicMedicationRequirements = memberDetails.isMemberOrDependentHasChronicMedRequirements()?"Yes":"No";
 
-            String endBody = "<br><h3>Thank you</h3>"+
-                    "<br><h3>Regards</h3>"+
-                    "<body/>"+
-                    "</html>";
+            String medicalAidProvider = memberDetails.isHasMedicalAid()?"<p><strong>Name Of Medical Aid Provider:</strong> "+nameOfMedicalAidProvider+"</p>\n":"";
+
+            String body =  "<!DOCTYPE html>\n" +
+                    "<html lang=\"en\">\n" +
+                    "<head>\n" +
+                    "    <meta charset=\"UTF-8\">\n" +
+                    "    <meta name=\"viewport\" content=\"width=device-width, initial-scale=1.0\">\n" +
+                    "    <title>Customer Support Request</title>\n" +
+                    "</head>\n" +
+                    "<body style=\"font-family: Arial, sans-serif; line-height: 1.6; color: #333;\">\n" +
+                    "    <p>Dear "+receiverName+",</p>\n" +
+                    "\n" +
+                    "    <p>Please find the details of a customer who requires follow-up support:</p>\n" +
+                    "\n" +
+                    "   <p><strong>Full Name:</strong> "+fullName+"</p>\n" +
+                    "   <p><strong>Contact Number:</strong> "+phoneNumber+"</p>\n" +
+                    "   <p><strong>Email Address:</strong> <a href=\"mailto:"+emailAddress+"+\">"+emailAddress+"</a></p></li>\n" +
+                    "   <p><strong>Date of birth:</strong> "+dateOfBirth+"</p>\n" +
+                    "   <p><strong>Number of adults:</strong> "+adultsCount+"</p>\n"+
+                    "   <p><strong>Number of children:</strong> "+childrenCount+"</p>\n" +
+                    "   <p><strong>Member Has Medical Aid:</strong> "+hasMedicalAid+"</p>\n" +
+                        medicalAidProvider+
+                    "   <p><strong>Income Before Deductions More than R14 000.00:</strong> "+isGrossIncomeMoreThan14k+"</p>\n" +
+                    "   <p><strong>Amount Budgeted For Medical Cover:</strong> R"+budgetedAmount+"</p>\n" +
+                    "   <p><strong>Main Medical Priority:</strong> "+medicalPriority+"</p>\n" +
+                    "   <p><strong>Member Or Dependent Has Chronic Requirements:</strong> "+hasOrDependentHasChronicMedicationRequirements+"</p>\n" +
+                    "    <p>Kindly reach out to the customer directly to assist with their query or concern. Please ensure a prompt response to ensure their needs are met. Thank you for your support and attention to this matter.</p>\n" +
+                    "\n" +
+                    "    <p>Best regards,<br>\n" +
+                    "    eSure Team</p>\n" +
+                    "</body>\n" +
+                    "</html>\n";;
 
             // actual mail body
-            message.setContent("<html><body>" +
-                            "<head>" +
-                            "<style>" +
-                            "label{ " +
-                            "font-weight:bold;"+
-                            "width:300px;"+
-                            "color:#212529;"+
-                            "}"+
-                            "</style>" +
-                            "</head>"+
-                            "<h2>Good day, there is a "+subject.toLowerCase()+" with below details</h2>"+
-                            "<label>Name:</label>" + fullName+"<br>"+
-                            "<label>Email:</label>" + emailAddress+"<br>"+
-                            "<label>Contact number:</label>" + phoneNumber+"<br>"+
-                            "<label>Adult Count:</label>" + adultsCount+"<br>"+
-                            "<label>Children Count:</label>" + childrenCount+"<br>"+
-                            "<label>Does member has medical aid?:</label>" + hasMedicalAid+"<br>"+
-                            "<label>Income Category:</label>" + incomeCategory+"<br>"+
-                            "<label>Hospital Choice:</label>" + hospitalChoice+"<br>"+
-                            "<label>Hospital rates:</label>" + hospitalRates+"<br>"+
-                            "<label>Day to day cover level:</label>" + dayToDayCoverLevel+"<br>"+
-                            "<label>Doctor choice:</label>" + doctorChoice+"<br>"+
-                            "<label>Member has chronic medical requirements:</label>" + hasChronicMedicationRequirements+"<br>"+
-                            "<label>Hospital Exclusions:</label>" + hospitalExclusions+"<br>"+
-                            endBody
-                    ,"text/html"
+            message.setContent(body,"text/html"
             );
 
             // Send message
@@ -423,10 +440,10 @@ public class EmailService {
             transport.close();
 
             LOG.info(MessageFormat.format("Member medical aid details email notification successfully send for user {0}", emailAddress));
-            return Mono.just("Email Send");
+            return Mono.just("Email Send to "+ receiverName);
         }catch (MessagingException mex){
             LOG.error(MessageFormat.format("Member medical aid details email notification failed to send for user {0} error {1}",memberDetails.getEmail(),mex.getMessage()));
-            return Mono.just("Email not send");
+            return Mono.just("Email not send to "+ receiverName);
         }
     }
 
@@ -456,34 +473,42 @@ public class EmailService {
             message.setSubject(subject);
 
             String emailAddress = memberDetails.getEmail()==null?"":memberDetails.getEmail();
-            String fullName = memberDetails.getFullName()==null?"":memberDetails.getFullName();
-            String phoneNumber = memberDetails.getPhoneNumber()==null?"":memberDetails.getPhoneNumber();
+            String firstName = memberDetails.getFirstName()==null?"":memberDetails.getFirstName();
+            String lastName = memberDetails.getLastName()==null?"":memberDetails.getLastName();
+            String fullName = firstName.concat(" ").concat(lastName);
 
-            String endBody = "<br><h3>Thank you</h3>"+
-                    "<br><h3>Regards</h3>"+
-                    "<body/>"+
-                    "</html>";
+            String body = "<!DOCTYPE html>\n" +
+                    "<html>\n" +
+                    "<head>\n" +
+                    "  <meta charset=\"UTF-8\">\n" +
+                    "  <meta name=\"viewport\" content=\"width=device-width, initial-scale=1.0\">\n" +
+                    "  <title>Welcome to eSure Medical Aid</title>\n" +
+                    "</head>\n" +
+                    "<body>\n" +
+                    "  <p>Hi "+fullName+",</p>\n" +
+                    "  \n" +
+                    "  <p>Welcome to eSure Medical Aid!</p>\n" +
+                    "  \n" +
+                    "  <p>Thank you for submitting your request with eSure. One of our customer support agents will be in touch shortly to complete your application.</p>\n" +
+                    "  \n" +
+                    "  <p>For immediate assistance, feel free to reach out to our support team:</p>\n" +
+                    "  \n" +
+                    "  <ul>\n" +
+                    "    <li>Phone: 010 006 7394</li>\n" +
+                    "    <li>Email: <a href=\"mailto:support@esurecover.co.za\">support@esurecover.co.za</a></li>\n" +
+                    "    <li>WhatsApp: 068 148 8912</li>\n" +
+                    "  </ul>\n" +
+                    "  \n" +
+                    "  <p>Thank you,</p>\n" +
+                    "  \n" +
+                    "  <p>The eSure Team</p>\n" +
+                    "  \n" +
+                    "  <p><small>eSure is a Juristic Representative of Royale Crowns Financial Services, an authorized Financial Services Provider (FSP No.: 52845). All insurance products are regulated under Royale Crowns Financial Services.</small></p>\n" +
+                    "</body>\n" +
+                    "</html>\n";
 
             // actual mail body
-            message.setContent("<html><body>" +
-                            "<head>" +
-                            "<style>" +
-                            "label{ " +
-                            "font-weight:bold;"+
-                            "width:300px;"+
-                            "color:#212529;"+
-                            "}"+
-                            "</style>" +
-                            "</head>"+
-                            "<h2>Hi "+fullName+"</h2>"+
-                            "<p><h2>Welcome to eSure Medical Aid!</h2><br>Thank you for registering with eSure. One of our agencies will contact you regarding your application.<br>"+
-                            "<br>Below are your details<br>"+
-                            "<label>Name:</label>" + fullName+"<br>"+
-                            "<label>Email:</label>" + emailAddress+"<br>"+
-                            "<label>Contact number:</label>" + phoneNumber+"<br>"+
-                            endBody
-                    ,"text/html"
-            );
+            message.setContent(body,"text/html");
 
             // Send message
             transport.connect();

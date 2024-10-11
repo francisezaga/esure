@@ -306,8 +306,8 @@ public class PolicyService {
                         }
                         customer.setInstructions(instructions);
                     }
-                    return emailService.sendEmail(customer, "New eSure Insurance Policy")
-                            .flatMap(email-> emailService.sendInsuranceWelcomeEmail(customer,"Welcome To eSure Insurance")
+                    return emailService.sendFSPInsuranceWelcomeEmail(customer, "New eSure Insurance Policy")
+                            .flatMap(email-> emailService.sendFSPInsuranceWelcomeEmail(customer,"Welcome To eSure Insurance")
                                         .flatMap(Mono::just)
                             );
                 }).onErrorResume(err -> {
