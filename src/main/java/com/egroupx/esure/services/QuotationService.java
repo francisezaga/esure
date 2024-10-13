@@ -7,7 +7,6 @@ import com.egroupx.esure.dto.fsp_qoute.house_hold.HouseholdContents;
 import com.egroupx.esure.dto.fsp_qoute.vehicle.MotorVehicles;
 import com.egroupx.esure.exceptions.APIErrorException;
 import com.egroupx.esure.exceptions.APIErrorHandler;
-import com.egroupx.esure.exceptions.LifeAPIErrorException;
 import com.egroupx.esure.model.Customer;
 import com.egroupx.esure.model.responses.api.APIResponse;
 import com.egroupx.esure.model.responses.fsp_qoute_policies.QuotationResultResponse;

@@ -45,6 +45,29 @@ public class AppUtil {
         }
     }
 
+    public static LocalDate formatToSQLDate(String strDate){
+        if(strDate!=null) {
+            try {
+                LocalDate date = null;
+                if (strDate.contains("/")) {
+                    Date date1 = new SimpleDateFormat("yyyy-MM-dd").parse(strDate.replaceAll("/", "-"));
+                    date = date1.toInstant().atZone(ZoneId.systemDefault()).toLocalDate();
+                }
+                if (strDate.contains("-")) {
+
+                    Date date1 = new SimpleDateFormat("yyyy-MM-dd").parse(strDate.substring(0, 10));
+                    date = date1.toInstant().atZone(ZoneId.systemDefault()).toLocalDate();
+                }
+                return date;
+            } catch (ParseException psEx) {
+                return null;
+            }
+        }
+        else{
+            return null;
+        }
+    }
+
     public static int stringToInteger(String strInt){
         try {
             return Integer.parseInt(strInt);

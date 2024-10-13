@@ -848,7 +848,7 @@ public class LifeInsuranceService {
     }
 
     Mono<String> saveMember(String memberID, MemberDTO memberDTO) {
-        return lifeInsuranceRepository.saveMember(memberID, memberDTO.getClient(), memberDTO.getAgentCode(), memberDTO.getPolicyNumber(), memberDTO.getBrokerCode(), memberDTO.getTitle(), memberDTO.getFirstName(), memberDTO.getSurname(), memberDTO.getIdNumber(), memberDTO.getGender(), AppUtil.formatDate(memberDTO.getDateOfBirth()), memberDTO.getAge(), memberDTO.getCellNumber(), memberDTO.getAltCellNumber(), memberDTO.getWorkNumber(), memberDTO.getHomeNumber(), memberDTO.getEmail(), memberDTO.getFax(), memberDTO.getContactType(), memberDTO.getPostalAddress1(), memberDTO.getPostalAddress2(),
+        return lifeInsuranceRepository.saveMember(memberID, memberDTO.getClient(), memberDTO.getAgentCode(), memberDTO.getPolicyNumber(), memberDTO.getBrokerCode(), memberDTO.getTitle(), memberDTO.getFirstName(), memberDTO.getSurname(), memberDTO.getIdNumber(), memberDTO.getGender(), AppUtil.formatToSQLDate(memberDTO.getDateOfBirth()), memberDTO.getAge(), memberDTO.getCellNumber(), memberDTO.getAltCellNumber(), memberDTO.getWorkNumber(), memberDTO.getHomeNumber(), memberDTO.getEmail(), memberDTO.getFax(), memberDTO.getContactType(), memberDTO.getPostalAddress1(), memberDTO.getPostalAddress2(),
                         memberDTO.getPostalAddress3(), memberDTO.getPostalCode(), memberDTO.getResidentialAddress1(), memberDTO.getResidentialAddress2(), memberDTO.getResidentialAddress3(), memberDTO.getResidentialCode(), memberDTO.getMemberType(), memberDTO.getPremium(), memberDTO.getCover(), memberDTO.getAddPolicyID(), memberDTO.getStatusCode(), memberDTO.getEgroupxAgentId()
                 ).then(Mono.just("next"))
                 .flatMap(msg -> {
@@ -861,7 +861,7 @@ public class LifeInsuranceService {
     }
 
     Mono<String> updateMember(String memberID, MemberDTO memberDTO) {
-        return lifeInsuranceRepository.updateMember(memberID, memberDTO.getClient(), memberDTO.getAgentCode(), memberDTO.getPolicyNumber(), memberDTO.getBrokerCode(), memberDTO.getTitle(), memberDTO.getFirstName(), memberDTO.getSurname(), memberDTO.getIdNumber(), memberDTO.getGender(), AppUtil.formatDate(memberDTO.getDateOfBirth()), memberDTO.getAge(), memberDTO.getCellNumber(), memberDTO.getAltCellNumber(), memberDTO.getWorkNumber(), memberDTO.getHomeNumber(), memberDTO.getEmail(), memberDTO.getFax(), memberDTO.getContactType(), memberDTO.getPostalAddress1(), memberDTO.getPostalAddress2(),
+        return lifeInsuranceRepository.updateMember(memberID, memberDTO.getClient(), memberDTO.getAgentCode(), memberDTO.getPolicyNumber(), memberDTO.getBrokerCode(), memberDTO.getTitle(), memberDTO.getFirstName(), memberDTO.getSurname(), memberDTO.getIdNumber(), memberDTO.getGender(), AppUtil.formatToSQLDate(memberDTO.getDateOfBirth()), memberDTO.getAge(), memberDTO.getCellNumber(), memberDTO.getAltCellNumber(), memberDTO.getWorkNumber(), memberDTO.getHomeNumber(), memberDTO.getEmail(), memberDTO.getFax(), memberDTO.getContactType(), memberDTO.getPostalAddress1(), memberDTO.getPostalAddress2(),
                         memberDTO.getPostalAddress3(), memberDTO.getPostalCode(), memberDTO.getResidentialAddress1(), memberDTO.getResidentialAddress2(), memberDTO.getResidentialAddress3(), memberDTO.getResidentialCode(), memberDTO.getMemberType(), memberDTO.getPremium(), memberDTO.getCover(), memberDTO.getAddPolicyID(), memberDTO.getStatusCode(),memberDTO.getEgroupxAgentId()
                 ).then(Mono.just("next"))
                 .flatMap(msg -> {
@@ -882,7 +882,7 @@ public class LifeInsuranceService {
                 })
                 .switchIfEmpty(Mono.defer(() -> {
                     LOG.error(MessageFormat.format("Member does not existing {0}. Saving member ", memberDTO.getIdNumber()));
-                    return lifeInsuranceRepository.saveMemberPersonalDetails(memberDTO.getTitle(), memberDTO.getFirstName(), memberDTO.getSurname(), memberDTO.getIdNumber(), memberDTO.getGender(), AppUtil.formatDate(memberDTO.getDateOfBirth()), memberDTO.getAge(), memberDTO.getCellNumber(), memberDTO.getAltCellNumber(), memberDTO.getWorkNumber(), memberDTO.getHomeNumber(), memberDTO.getEmail(), memberDTO.getContactType()).then(Mono.just("next"))
+                    return lifeInsuranceRepository.saveMemberPersonalDetails(memberDTO.getTitle(), memberDTO.getFirstName(), memberDTO.getSurname(), memberDTO.getIdNumber(), memberDTO.getGender(), AppUtil.formatToSQLDate(memberDTO.getDateOfBirth()), memberDTO.getAge(), memberDTO.getCellNumber(), memberDTO.getAltCellNumber(), memberDTO.getWorkNumber(), memberDTO.getHomeNumber(), memberDTO.getEmail(), memberDTO.getContactType()).then(Mono.just("next"))
                             .flatMap(msg -> {
                                 LOG.info(MessageFormat.format("Completed saving member personal details {0}", memberDTO.getIdNumber()));
                                // return sendEmailLifeCoverNotification(memberDTO.getIdNumber()).flatMap(res-> {
@@ -899,7 +899,7 @@ public class LifeInsuranceService {
     }
 
     Mono<ResponseEntity<APIResponse>> saveSpouse(SpouseDTO spouseDTO) {
-        return lifeInsuranceRepository.saveSpouse(spouseDTO.getClient(), spouseDTO.getTitle(), spouseDTO.getFirstName(), spouseDTO.getSurname(), spouseDTO.getIdNumber(), spouseDTO.getGender(), AppUtil.formatDate(spouseDTO.getDateOfBirth()), spouseDTO.getAge(), spouseDTO.getMainMemberID(), spouseDTO.getPolicyNumber())
+        return lifeInsuranceRepository.saveSpouse(spouseDTO.getClient(), spouseDTO.getTitle(), spouseDTO.getFirstName(), spouseDTO.getSurname(), spouseDTO.getIdNumber(), spouseDTO.getGender(), AppUtil.formatToSQLDate(spouseDTO.getDateOfBirth()), spouseDTO.getAge(), spouseDTO.getMainMemberID(), spouseDTO.getPolicyNumber())
                 .then(Mono.just("next"))
                 .flatMap(msg -> {
                     LOG.info(MessageFormat.format("Completed saving spouse details {0}", spouseDTO.getMainMemberID()));
@@ -912,7 +912,7 @@ public class LifeInsuranceService {
     }
 
     Mono<ResponseEntity<APIResponse>> saveExtendedDependent(ExtendedMemberDTO extendedMemberDto) {
-        return lifeInsuranceRepository.saveExtendedDependent(extendedMemberDto.getClient(), extendedMemberDto.getTitle(), extendedMemberDto.getFirstName(), extendedMemberDto.getSurname(), extendedMemberDto.getIdNumber(), extendedMemberDto.getGender(), AppUtil.formatDate(extendedMemberDto.getDateOfBirth()), extendedMemberDto.getAge(), extendedMemberDto.getMainMemberID(), extendedMemberDto.getPolicyNumber(), extendedMemberDto.getRelation())
+        return lifeInsuranceRepository.saveExtendedDependent(extendedMemberDto.getClient(), extendedMemberDto.getTitle(), extendedMemberDto.getFirstName(), extendedMemberDto.getSurname(), extendedMemberDto.getIdNumber(), extendedMemberDto.getGender(), AppUtil.formatToSQLDate(extendedMemberDto.getDateOfBirth()), extendedMemberDto.getAge(), extendedMemberDto.getMainMemberID(), extendedMemberDto.getPolicyNumber(), extendedMemberDto.getRelation())
                 .then(Mono.just("next"))
                 .flatMap(msg -> {
                     LOG.info(MessageFormat.format("Completed saving external dependent details {0}", extendedMemberDto.getMainMemberID()));
@@ -924,7 +924,7 @@ public class LifeInsuranceService {
     }
 
     Mono<ResponseEntity<APIResponse>> saveDependent(DependentDTO dependentDTO) {
-        return lifeInsuranceRepository.saveDependent(dependentDTO.getClient(), dependentDTO.getTitle(), dependentDTO.getFirstName(), dependentDTO.getSurname(), dependentDTO.getIdNumber(), dependentDTO.getGender(), AppUtil.formatDate(dependentDTO.getDateOfBirth()), dependentDTO.getAge(), dependentDTO.getMainMemberID(), dependentDTO.getPolicyNumber())
+        return lifeInsuranceRepository.saveDependent(dependentDTO.getClient(), dependentDTO.getTitle(), dependentDTO.getFirstName(), dependentDTO.getSurname(), dependentDTO.getIdNumber(), dependentDTO.getGender(), AppUtil.formatToSQLDate(dependentDTO.getDateOfBirth()), dependentDTO.getAge(), dependentDTO.getMainMemberID(), dependentDTO.getPolicyNumber())
                 .then(Mono.just("next"))
                 .flatMap(msg -> {
                     LOG.info(MessageFormat.format("Completed saving dependent details {0}", dependentDTO));
@@ -936,7 +936,7 @@ public class LifeInsuranceService {
     }
 
     Mono<ResponseEntity<APIResponse>> saveBeneficiary(BeneficiaryDTO beneficiaryDTO) {
-        return lifeInsuranceRepository.saveBeneficiary(beneficiaryDTO.getPolicyNumber(), beneficiaryDTO.getClient(), beneficiaryDTO.getContactCell(), beneficiaryDTO.getContactWorkTell(), beneficiaryDTO.getContactHomeTell(), beneficiaryDTO.getContactFax(), beneficiaryDTO.getContactEmail(), beneficiaryDTO.getSessionUserID(), beneficiaryDTO.getPrefType(), beneficiaryDTO.getBenLastName(), beneficiaryDTO.getBenFirstName(), beneficiaryDTO.getBenIDNumber(), beneficiaryDTO.getBenPercentage(), AppUtil.formatDate(beneficiaryDTO.getBenDOB()), beneficiaryDTO.getBenRelation(), beneficiaryDTO.getBenType(), beneficiaryDTO.getTitle(), beneficiaryDTO.getMainMemberID())
+        return lifeInsuranceRepository.saveBeneficiary(beneficiaryDTO.getPolicyNumber(), beneficiaryDTO.getClient(), beneficiaryDTO.getContactCell(), beneficiaryDTO.getContactWorkTell(), beneficiaryDTO.getContactHomeTell(), beneficiaryDTO.getContactFax(), beneficiaryDTO.getContactEmail(), beneficiaryDTO.getSessionUserID(), beneficiaryDTO.getPrefType(), beneficiaryDTO.getBenLastName(), beneficiaryDTO.getBenFirstName(), beneficiaryDTO.getBenIDNumber(), beneficiaryDTO.getBenPercentage(), AppUtil.formatToSQLDate(beneficiaryDTO.getBenDOB()), beneficiaryDTO.getBenRelation(), beneficiaryDTO.getBenType(), beneficiaryDTO.getTitle(), beneficiaryDTO.getMainMemberID())
                 .then(Mono.just("next"))
                 .flatMap(msg -> {
                     LOG.info(MessageFormat.format("Completed saving beneficiary details {0}", beneficiaryDTO.getBenIDNumber()));
@@ -1032,7 +1032,7 @@ public class LifeInsuranceService {
                 })
                 .then(Mono.just("Add spouses")).flatMap(allRisksStep -> {
                     LOG.info("Spouses");
-                    return lifeInsuranceRepository.findSpouseByIdNumber(String.valueOf(member.getPol_360_main_member_id())).collectList()
+                    return lifeInsuranceRepository.findSpouseByMainMemberIdRef(String.valueOf(member.getPol_360_main_member_id())).collectList()
                             .flatMap(spouses -> {
                                 member.setSpouses(spouses);
                                 return Mono.just(spouses);
@@ -1041,7 +1041,7 @@ public class LifeInsuranceService {
 
                 .then(Mono.just("Add dependents")).flatMap(dependentsStep -> {
                     LOG.info("Dependents");
-                    return lifeInsuranceRepository.findDependentByIdNumber(String.valueOf(member.getPol_360_main_member_id())).collectList()
+                    return lifeInsuranceRepository.findDependentByMainMemberIdRef(String.valueOf(member.getPol_360_main_member_id())).collectList()
                             .flatMap(dependents -> {
                                 member.setDependents(dependents);
                                 return Mono.just(dependents);
@@ -1049,14 +1049,14 @@ public class LifeInsuranceService {
                 })
                 .then(Mono.just("Add extended members")).flatMap(allRisksStep -> {
                     LOG.info("Extended members");
-                    return lifeInsuranceRepository.findExtendedMemberByIdNumber(String.valueOf(member.getPol_360_main_member_id())).collectList()
+                    return lifeInsuranceRepository.findExtendedMemberByMainMemberIdRef(String.valueOf(member.getPol_360_main_member_id())).collectList()
                             .flatMap(exDependents -> {
                                 member.setExtendedMembers(exDependents);
                                 return Mono.just(exDependents);
                             });
                 }).then(Mono.just("Add beneficiaries")).flatMap(allRisksStep -> {
                     LOG.info("Beneficiaries");
-                    return lifeInsuranceRepository.findBeneficiaryByIdNumber(String.valueOf(member.getPolicyNumber())).collectList()
+                    return lifeInsuranceRepository.findBeneficiaryByMainMemberIdRef(String.valueOf(member.getPol_360_main_member_id())).collectList()
                             .flatMap(beneficiaries -> {
                                 member.setBeneficiaries(beneficiaries);
                                 return Mono.just(beneficiaries);
@@ -1064,7 +1064,7 @@ public class LifeInsuranceService {
                 })
                 .then(Mono.just("Add bank details")).flatMap(allRisksStep -> {
                     LOG.info("Bank Details");
-                    return lifeInsuranceRepository.findBankDetailsByIdNumber(idNumber).collectList()
+                    return lifeInsuranceRepository.findBankDetailsByMainMemberIdNumber(idNumber).collectList()
                             .flatMap(bankDetails -> {
                                 member.setBankDetails(bankDetails);
                                 return Mono.just(bankDetails);

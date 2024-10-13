@@ -22,7 +22,7 @@ public interface LifeInsuranceRepository extends ReactiveCrudRepository<MemberDT
     @Query("INSERT IGNORE INTO esure_members SET step='ACCOUNT_REQUESTED', title=:title, first_name=:firstName, surname=:surname, id_number=:idNumber, gender=:gender,date_of_birth=:dateOfBirth, age=:age, cell_number=:cellNumber, alt_cell_number=:altCellNumber, work_number=:workNumber, home_number=:homeNumber, email=:email, contact_type=:contactType")
     Mono<MemberDTO> saveMemberPersonalDetails(String title, String firstName, String surname,String idNumber,String gender,LocalDate dateOfBirth, String age, String cellNumber, String altCellNumber, String workNumber, String homeNumber,String email, String contactType);
 
-    @Query("INSERT IGNORE INTO esure_spouses SET  client=:client, title=:title, firstName=:first_name, surname=:surname, id_number=:idNumber, gender=:gender,date_of_birth=:dateOfBirth, age=:age, main_member_id=:mainMemberId, policy_number=:policyNumber")
+    @Query("INSERT IGNORE INTO esure_spouses SET  client=:client, title=:title, first_name=:firstName, surname=:surname, id_number=:idNumber, gender=:gender,date_of_birth=:dateOfBirth, age=:age, main_member_id=:mainMemberId, policy_number=:policyNumber")
     Mono<SpouseDTO> saveSpouse(String client, String title, String firstName, String surname, String idNumber, String gender, LocalDate dateOfBirth, String age, String mainMemberId, String policyNumber);
 
     @Query("INSERT IGNORE INTO esure_ext_dependents SET client=:client, title =:title, first_name=:firstName, surname=:surname, id_number=:idNumber, gender=:gender,date_of_birth=:dateOfBirth, age=:age, main_member_id=:mainMemberId, policy_number=:policyNumber, relation=:relation")
@@ -59,21 +59,21 @@ public interface LifeInsuranceRepository extends ReactiveCrudRepository<MemberDT
     Mono<Member> updateMemberStepDetails(String step,Long id);
 
     @Query("SELECT * FROM esure_spouses WHERE main_member_id=:mainMemberId")
-    Flux<Spouse> findSpouseByIdNumber(String mainMemberId);
+    Flux<Spouse> findSpouseByMainMemberIdRef(String mainMemberId);
 
     @Query("UPDATE esure_members SET doc_type=:docType, file_path=:filePath WHERE pol_360_main_member_id=:mainMemberId")
     Mono<Member> updateMainMemberDocumentsDetails(String docType,String filePath,String mainMemberId);
 
     @Query("SELECT * FROM esure_ext_dependents WHERE  main_member_id=:mainMemberId")
-    Flux<ExtendedMember> findExtendedMemberByIdNumber(String mainMemberId);
+    Flux<ExtendedMember> findExtendedMemberByMainMemberIdRef(String mainMemberId);
 
     @Query("SELECT * FROM esure_dependents WHERE  main_member_id=:mainMemberId")
-    Flux<Dependent> findDependentByIdNumber(String mainMemberId);
+    Flux<Dependent> findDependentByMainMemberIdRef(String mainMemberId);
 
     @Query("SELECT * FROM esure_beneficiaries WHERE  main_member_id=:mainMemberId")
-    Flux<Beneficiary> findBeneficiaryByIdNumber(String mainMemberId);
+    Flux<Beneficiary> findBeneficiaryByMainMemberIdRef(String mainMemberId);
 
     @Query("SELECT * FROM esure_bank_details WHERE id_number=:idNumber")
-    Flux<BankDetails> findBankDetailsByIdNumber(String idNumber);
+    Flux<BankDetails> findBankDetailsByMainMemberIdNumber(String idNumber);
 
 }
