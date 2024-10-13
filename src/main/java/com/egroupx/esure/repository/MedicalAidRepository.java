@@ -16,4 +16,7 @@ public interface MedicalAidRepository extends ReactiveCrudRepository<MotorVehicl
     @Query("SELECT * FROM esure_medical_aid_member_details where phone_number=:phoneNumber order by id desc limit 1")
     Mono<MedicalAidMemberDetails> findMedicalAidRecordByPhoneNumber(String phoneNumber);
 
+    @Query("SELECT * FROM esure_medical_aid_member_details where email=:email order by id desc limit 1")
+    Mono<MedicalAidMemberDetails> findMedicalAidRecordByEmailAddress(String email);
+
 }

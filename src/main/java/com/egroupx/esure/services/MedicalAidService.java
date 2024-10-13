@@ -38,7 +38,7 @@ public class MedicalAidService {
 
     public Mono<ResponseEntity<APIResponse>> saveMedicalAidMemberPersonalDetails(MedicalAidMemberDetails memberDetails) {
 
-        return medicalAidRepository.findMedicalAidRecordByPhoneNumber(memberDetails.getPhoneNumber())
+        return medicalAidRepository.findMedicalAidRecordByEmailAddress(memberDetails.getEmail())
                 .flatMap(member -> {
                     LOG.info(MessageFormat.format("Medical aid member already exist. {0}", memberDetails.getPhoneNumber()));
                     return Mono.just(ResponseEntity.badRequest().body(new APIResponse(400, "fail", "Medical aid member details already exist", Instant.now())));
@@ -48,7 +48,7 @@ public class MedicalAidService {
                     return medicalAidRepository.saveMedicalAidDetails(memberDetails.getAdultsCount(), memberDetails.getChildrenCount(), memberDetails.getFirstName(), memberDetails.getLastName(), memberDetails.getEmail(), memberDetails.getPhoneNumber(), memberDetails.getDateOfBirth(), memberDetails.isHasMedicalAid(), memberDetails.getNameOfMedicalAidProvider(), memberDetails.isGrossIncomeMoreThan14K(), memberDetails.getBudgetedAmount(), memberDetails.getMedicalPriority(), memberDetails.isNetIncomeMoreThan14k(), memberDetails.isMemberOrDependentHasChronicMedRequirements()).then(Mono.just("next"))
                             .flatMap(msg -> {
                                 LOG.info(MessageFormat.format("Completed saving medical aid member personal details {0}", memberDetails.getPhoneNumber()));
-                                return sendEmailLifeCoverNotification(memberDetails.getPhoneNumber()).flatMap(res -> {
+                                return sendEmailLifeCoverNotification(memberDetails.getEmail()).flatMap(res -> {
                                     return Mono.just(ResponseEntity.ok().body(new APIResponse(200, "success", "Medical aid details saved", Instant.now())));
                                 });
                             }).onErrorResume(err -> {
@@ -62,15 +62,15 @@ public class MedicalAidService {
                 });
     }
 
-    Mono<String> sendEmailLifeCoverNotification(String phoneNumber) {
-        return medicalAidRepository.findMedicalAidRecordByPhoneNumber(phoneNumber)
+    Mono<String> sendEmailLifeCoverNotification(String email) {
+        return medicalAidRepository.findMedicalAidRecordByEmailAddress(email)
                 .flatMap(member -> {
                     return emailService.sendQuotationEmailForMedicalAid(member, "New Medical Aid Lead from eSure", "Pfister Agent",pfisterEmailAddress)
                             .flatMap(Mono::just).then(Mono.just("Send email to esure call center"))
                             .flatMap(esure -> emailService.sendQuotationEmailForMedicalAid(member, "New Medical Aid Lead from eSure", "eSure Medical Aid Support",esureEmailAddress))
                             .then(Mono.just("Send welcome email to customer")).flatMap(welcome -> emailService.sendWelcomeEmailForMedicalAid(member, "Welcome to eSure Medical Aid! - We're Excited to Have You").flatMap(Mono::just));
                 }).onErrorResume(err -> {
-                    LOG.error(MessageFormat.format("Failed to send email for medical aid ref {0}. Error {1}", phoneNumber, err.getMessage()));
+                    LOG.error(MessageFormat.format("Failed to send email for medical aid ref {0}. Error {1}", email, err.getMessage()));
                     return Mono.just("Failed to send email");
                 });
     }

@@ -62,7 +62,7 @@ public class AuthService {
                         });
             }
             else{
-                if(cellNumber.trim().contains("278000000")){
+                if(cellNumber.trim().contains("278000000") || cellNumber.trim().contains("2784")){
                     return saveOTPDetails(cellNumber.trim(),LocalDateTime.now(),"",otpCode.trim())
                             .flatMap(apiResponse -> {
                                 if(apiResponse.getStatus()==200){

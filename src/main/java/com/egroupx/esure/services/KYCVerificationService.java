@@ -345,37 +345,37 @@ public class KYCVerificationService {
     Mono<ResponseEntity<APIResponse>> updateMemberKYCDetails(String idNumber,boolean nameSpaceScanPass,String nameSpaceScanFailReason, boolean idVerificationPass,String idVerificationFailReason,Long id){
         return lifeInsuranceRepository.updateMemberKycDetails(nameSpaceScanPass,nameSpaceScanFailReason,idVerificationPass,idVerificationFailReason,id).then(Mono.just("next")).flatMap(msg->{
             LOG.info(MessageFormat.format("Completed updating member kyc verification details {0}",id));
-            return sendEmailLifeCoverNotification(idNumber)
+            /*return sendEmailLifeCoverNotification(idNumber)
                     .then(Mono.just("next")).flatMap(nextStep->{
                         return Mono.just("next");
-                    }).then(Mono.just("next")).flatMap(next->{
+                    })then(Mono.just("next")).flatMap(next->{*/
                         return updateMemberStepDetails("APPLICATION_COMPLETED",id)
                                 .then(Mono.just("done")).flatMap(done->{
                                     return Mono.just(ResponseEntity.ok().body(new APIResponse(200,"success","Completed updating member kyc verification details "+ id,Instant.now())));
                                 });
 
-                    });
+                   // });
         }).onErrorResume(err -> {
             LOG.error(MessageFormat.format("Failed to update member kyc verification details {0}",err.getMessage()));
-            return sendEmailLifeCoverNotification(idNumber)
+            /*return sendEmaiForFuneralCoverNotification(idNumber)
                     .then(Mono.just("next")).flatMap(nextStep->{
                         return Mono.just("next");
-                    }).then(Mono.just("next")).flatMap(next->{
+                    }).then(Mono.just("next")).flatMap(next->{*/
                         return updateMemberStepDetails("APPLICATION_COMPLETED",id)
                                 .then(Mono.just("done")).flatMap(done->{
                                     return Mono.just(ResponseEntity.ok().body(new APIResponse(200,"success","Completed updating member kyc verification details "+ id,Instant.now())));
                                 });
 
-                    });
+                    //});
             //return Mono.just(ResponseEntity.badRequest().body(new APIResponse(400,"fail","Failed to update member verification details",Instant.now())));
         });
     }
 
-    Mono<String> sendEmailLifeCoverNotification(String idNumber) {
+    Mono<String> sendEmailForFuneralCoverCoverNotification(String idNumber) {
         return lifeInsuranceRepository.findMemberLastRecordByIdNumber(idNumber)
                 .flatMap(member -> {
-                    return emailService.sendEmailForLifeCover(member, "New eSure Life Cover")
-                            .flatMap(email-> emailService.sendLifeCoverWelcomeEmail(member,"Welcome To eSure Life Cover")
+                    return emailService.sendEmailForFuneralCover(member, "New eSure Life Cover")
+                            .flatMap(email-> emailService.sendFuneralCoverWelcomeEmail(member,"Welcome To eSure Life Cover")
                                     .flatMap(Mono::just)
                             );
                 }).onErrorResume(err -> {

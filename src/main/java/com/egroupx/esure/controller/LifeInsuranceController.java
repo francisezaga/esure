@@ -53,6 +53,32 @@ public class LifeInsuranceController {
     public Mono<ResponseEntity<APIResponse>> createSpouse(@RequestBody SpouseDTO spouse)  {
         return lifeInsuranceService.createSpouse(spouse);
     }
+
+    @PostMapping(value = {"/sendSMSFromPol360"})
+    public Mono<ResponseEntity<APIResponse>> sendSMSFromPol360(@RequestBody SendPolicySMSDTO sendPolicySMSDTO)  {
+        return lifeInsuranceService.sendSMSFromPol360(sendPolicySMSDTO);
+    }
+
+    @GetMapping(value = {"/viewPolicyDocument/{clientName}/{relatedId}"})
+    public Mono<ResponseEntity<APIResponse>> viewPolicyDocument(@PathVariable String clientName,@PathVariable String relatedId)  {
+        return lifeInsuranceService.viewPolicyDocument(clientName,relatedId);
+    }
+
+    @GetMapping(value = {"/downloadPolicyDocument/{clientName}/{relatedId}"})
+    public Mono<ResponseEntity<?>> downloadPolicyDocument(@PathVariable String clientName,@PathVariable String relatedId)  {
+        return lifeInsuranceService.downloadPolicyDocument(clientName,relatedId);
+    }
+
+    @PostMapping(value = {"/sendPol360SMSForPolicyDocLink/{clientName}/{relatedId}"})
+    public Mono<ResponseEntity<APIResponse>> sendPol360SMSForPolicyDocLink(@PathVariable String clientName,@PathVariable String relatedId)  {
+        return lifeInsuranceService.sendPol360SMSForPolicyDocLink(clientName,relatedId);
+    }
+
+    @PostMapping(value = {"/sendESureSMSPolicyDocLink/{clientName}/{relatedId}"})
+    public Mono<ResponseEntity<APIResponse>> sendESureSMSPolicyDocLink(@PathVariable String clientName,@PathVariable String relatedId)  {
+        return lifeInsuranceService.sendESureSMSForPolicyDocLink(clientName,relatedId);
+    }
+
     @PostMapping(value = {"/addBankDetails"})
     public Mono<ResponseEntity<APIResponse>> addBankDetails(@RequestBody BankDetailsDTO bankDetails)  {
         return lifeInsuranceService.addBankDetails(bankDetails);

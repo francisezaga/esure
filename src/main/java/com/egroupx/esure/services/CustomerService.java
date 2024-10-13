@@ -302,7 +302,7 @@ public class CustomerService {
     Mono<String> sendEmailQuotationNotification(Long fspQuoteId) {
         return customerRepository.getCustomerEmailDetailsByQuoteRef(fspQuoteId)
                 .flatMap(customer -> {
-                    return emailService.sendQuotationNotificationEmail(customer,"New Quote Request:"+" "+fspQuoteId).flatMap(Mono::just);
+                    return emailService.sendFSPQuotationNotificationEmail(customer,"New Quote Request:"+" "+fspQuoteId).flatMap(Mono::just);
                 }).onErrorResume(err -> {
                     LOG.error(MessageFormat.format("Failed to send email quote ref {0}. Error {1}",fspQuoteId, err.getMessage()));
                     return Mono.just("Failed to send email");

@@ -1,15 +1,19 @@
 package com.egroupx.esure.services;
 
+import com.egroupx.esure.dto.auth.SMSDTO;
 import com.egroupx.esure.dto.life.*;
 import com.egroupx.esure.dto.v360.ProductDTO;
 import com.egroupx.esure.enums.DOCType;
 import com.egroupx.esure.exceptions.APIErrorHandler;
 import com.egroupx.esure.exceptions.LifeAPIErrorException;
+import com.egroupx.esure.model.Suburb;
 import com.egroupx.esure.model.life.Member;
 import com.egroupx.esure.model.responses.api.APIResponse;
 
+import com.egroupx.esure.model.responses.life.DownloadPolicyResponse;
 import com.egroupx.esure.model.responses.life.LifeAPIResponse;
 import com.egroupx.esure.model.responses.life.ProductsResponse;
+import com.egroupx.esure.model.responses.life.SendPolicySMSResponse;
 import com.egroupx.esure.repository.LifeInsuranceRepository;
 import com.egroupx.esure.util.AppUtil;
 import com.fasterxml.jackson.core.JsonProcessingException;
@@ -28,8 +32,17 @@ import org.springframework.web.reactive.function.client.WebClient;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 
+import java.io.FileOutputStream;
+import java.io.IOException;
+import java.io.InputStream;
+import java.net.MalformedURLException;
+import java.net.URL;
+import java.nio.channels.Channels;
+import java.nio.channels.FileChannel;
+import java.nio.channels.ReadableByteChannel;
 import java.nio.file.Paths;
 import java.text.MessageFormat;
+import java.time.Duration;
 import java.time.Instant;
 import java.util.ArrayList;
 import java.util.Base64;
@@ -452,6 +465,263 @@ public class LifeInsuranceService {
         });
     }
 
+    public Mono<ResponseEntity<APIResponse>> sendSMSFromPol360(SendPolicySMSDTO sendPolicySMSDTO) {
+        setConfigs(pol360EndpointUrl);
+        return tokenService.getPol360APIToken().flatMap(
+                bearerToken -> {
+                    if (!bearerToken.isBlank() || !bearerToken.isEmpty()) {
+
+                        ObjectMapper objectMapper = new ObjectMapper();
+                        objectMapper.registerModule(new JavaTimeModule());
+                        String formattedReq = null;
+                        try {
+                            formattedReq = objectMapper.writeValueAsString(sendPolicySMSDTO);
+                        } catch (JsonProcessingException ex) {
+                            return Mono.just(new APIResponse(400, "Failed", "Failed to get process request", Instant.now()));
+                        }
+
+                        return webClient.post()
+                                .uri("/api/360API.php?Function=SendSMS")
+                                .header(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON_VALUE)
+                                .header(HttpHeaders.ACCEPT, "*/*")
+                                .header("Authorization", bearerToken)
+                                .body(BodyInserters.fromObject(formattedReq))
+                                .retrieve()
+                                .onStatus(HttpStatusCode::isError, response -> response.bodyToMono(String.class) // error body as String or other class
+                                        .flatMap(error -> {
+                                            LOG.error(error);
+                                            return Mono.error(new LifeAPIErrorException(error));
+                                        }))
+                                .toEntity(SendPolicySMSResponse.class).map(responseEntity -> {
+                                    if (responseEntity.getStatusCode().is2xxSuccessful()) {
+                                        SendPolicySMSResponse sendPolicySMSResponse = responseEntity.getBody();
+                                        if (sendPolicySMSResponse  != null && sendPolicySMSResponse .getResult() != null && !sendPolicySMSResponse .getResult().toLowerCase().contains("err")) {
+                                            LOG.error(MessageFormat.format("SMS successfully successfully send for related Id id{0}", sendPolicySMSDTO.getRelatedId()));
+                                            return new APIResponse(200, "success", sendPolicySMSResponse.getMessage(), Instant.now());
+                                        } else {
+                                            LOG.error(MessageFormat.format("Failed to send policy sms for member. Response status {0}", sendPolicySMSResponse.getMessage()));
+                                            return new APIResponse(400, "fail", "Failed to send policy sms for member. Response " + sendPolicySMSResponse.getMessage(), Instant.now());
+                                        }
+                                    } else {
+                                        LOG.error(MessageFormat.format("Failed to send policy sms. Response status {0}", responseEntity.getStatusCode().value()));
+                                        return new APIResponse(400, "fail", "Failed to send policy sms. Response code " + responseEntity.getStatusCode().value(), Instant.now());
+                                    }
+                                }).onErrorResume(error -> {
+                                    LOG.error(MessageFormat.format("Failed to send policy sms {0}", error.getMessage()));
+                                    String errorMsg = APIErrorHandler.handleLifeAPIError(error.getMessage()).isEmpty() ? error.getMessage() : APIErrorHandler.handleLifeAPIError(error.getMessage());
+                                    return Mono.just(new APIResponse(400, "fail", "Failed to send policy sms. " + errorMsg, Instant.now()));
+                                });
+                    } else {
+                        return Mono.just(new APIResponse(400, "fail", "Error sending policy sms.", Instant.now()));
+                    }
+                }).flatMap(apiResponse -> {
+            if (apiResponse.getStatus() == 200) {
+                            return Mono.just(ResponseEntity.ok(new APIResponse(200, "success", apiResponse.getData(), Instant.now())));
+            } else {
+                return Mono.just(ResponseEntity.badRequest().body(apiResponse));
+            }
+        });
+    }
+
+    public Mono<ResponseEntity<APIResponse>> viewPolicyDocument(String clientName,String relatedId) {
+        setConfigs(pol360EndpointUrl);
+        return tokenService.getPol360APIToken().flatMap(
+                bearerToken -> {
+                    if (!bearerToken.isBlank() || !bearerToken.isEmpty()) {
+
+                        return webClient.get()
+                                .uri("/api/360API.php?Function=GetPolicyDocument&Client="+clientName+"&RelateID="+relatedId)
+                                .header(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON_VALUE)
+                                .header(HttpHeaders.ACCEPT, "*/*")
+                                .header("Authorization", bearerToken)
+                                .retrieve()
+                                .onStatus(HttpStatusCode::isError, response -> response.bodyToMono(String.class) // error body as String or other class
+                                        .flatMap(error -> {
+                                            LOG.error(error);
+                                            return Mono.error(new LifeAPIErrorException(error));
+                                        }))
+                                .toEntity(DownloadPolicyResponse.class).map(responseEntity -> {
+                                    if (responseEntity.getStatusCode().is2xxSuccessful()) {
+                                        DownloadPolicyResponse downloadPolicyResponse = responseEntity.getBody();
+                                        if (downloadPolicyResponse != null && downloadPolicyResponse.getResult() != null && !downloadPolicyResponse.getResult().toLowerCase().contains("err")) {
+                                            LOG.error(MessageFormat.format("Policy document successfully downloaded id{0}", relatedId));
+                                            return new APIResponse(200, "success", downloadPolicyResponse, Instant.now());
+                                        } else {
+                                            LOG.error(MessageFormat.format("Failed to download policy document. Response status {0}", downloadPolicyResponse.getMessage()));
+                                            return new APIResponse(400, "fail", "Failed to download policy document. Response " + downloadPolicyResponse.getMessage(), Instant.now());
+                                        }
+                                    } else {
+                                        LOG.error(MessageFormat.format("Failed to download policy document. Response status {0}", responseEntity.getStatusCode().value()));
+                                        return new APIResponse(400, "fail", "Failed to download policy document. Response code " + responseEntity.getStatusCode().value(), Instant.now());
+                                    }
+                                }).onErrorResume(error -> {
+                                    LOG.error(MessageFormat.format("Failed to download policy document {0}", error.getMessage()));
+                                    String errorMsg = APIErrorHandler.handleLifeAPIError(error.getMessage()).isEmpty() ? error.getMessage() : APIErrorHandler.handleLifeAPIError(error.getMessage());
+                                    return Mono.just(new APIResponse(400, "fail", "Failed to download policy document. " + errorMsg, Instant.now()));
+                                });
+                    } else {
+                        return Mono.just(new APIResponse(400, "fail", "Error download policy document.", Instant.now()));
+                    }
+                }).flatMap(apiResponse -> {
+            if (apiResponse.getStatus() == 200) {
+                 return Mono.just(ResponseEntity.ok(new APIResponse(200,"success",apiResponse.getData(),Instant.now())));
+            } else {
+                return Mono.just(ResponseEntity.badRequest().body(apiResponse));
+            }
+        });
+    }
+
+    public Mono<ResponseEntity<?>> downloadPolicyDocument(String clientName,String relatedId) {
+        setConfigs(pol360EndpointUrl);
+        return tokenService.getPol360APIToken().flatMap(
+                bearerToken -> {
+                    if (!bearerToken.isBlank() || !bearerToken.isEmpty()) {
+
+                        return webClient.get()
+                                .uri("/api/360API.php?Function=GetPolicyDocument&Client="+clientName+"&RelateID="+relatedId)
+                                .header(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON_VALUE)
+                                .header(HttpHeaders.ACCEPT, "*/*")
+                                .header("Authorization", bearerToken)
+                                .retrieve()
+                                .onStatus(HttpStatusCode::isError, response -> response.bodyToMono(String.class) // error body as String or other class
+                                        .flatMap(error -> {
+                                            LOG.error(error);
+                                            return Mono.error(new LifeAPIErrorException(error));
+                                        }))
+                                .toEntity(DownloadPolicyResponse.class).map(responseEntity -> {
+                                   if (responseEntity.getStatusCode().is2xxSuccessful()) {
+                                        DownloadPolicyResponse downloadPolicyResponse = responseEntity.getBody();
+                                        if (downloadPolicyResponse != null && downloadPolicyResponse.getResult() != null && !downloadPolicyResponse.getResult().toLowerCase().contains("err")) {
+                                            try{
+                                                InputStream inputStream = new URL(downloadPolicyResponse.getMessage()).openStream();
+                                                byte[] fileByteArray = inputStream.readAllBytes();
+
+                                                return ResponseEntity.ok()
+                                                        .header(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=\"" + "Policy_Document_Maimember_"+relatedId+".pdf" + "\"")
+                                                        .body(fileByteArray);
+                                            } catch (IOException e) {
+                                                LOG.error(MessageFormat.format("Failed to download policy document. Response status {0}", e.getMessage()));
+                                               return ResponseEntity.badRequest().body(new APIResponse(400, "fail", "Failed to download policy document.", Instant.now()));
+                                            }
+                                        } else {
+                                            LOG.error(MessageFormat.format("Failed to download policy document. Response status {0}", downloadPolicyResponse.getMessage()));
+                                            return ResponseEntity.badRequest().body(new APIResponse(400, "fail", "Failed to download policy document. Response " + downloadPolicyResponse.getMessage(), Instant.now()));
+                                        }
+                                    } else {
+                                        LOG.error(MessageFormat.format("Failed to download policy document. Response status {0}", responseEntity.getStatusCode().value()));
+                                        return ResponseEntity.badRequest().body(new APIResponse(400, "fail", "Failed to download policy document. Response code " + responseEntity.getStatusCode().value(), Instant.now()));
+                                    }
+                                }).onErrorResume(error -> {
+                                    LOG.error(MessageFormat.format("Failed to download policy document {0}", error.getMessage()));
+                                    String errorMsg = APIErrorHandler.handleLifeAPIError(error.getMessage()).isEmpty() ? error.getMessage() : APIErrorHandler.handleLifeAPIError(error.getMessage());
+                                    return Mono.just(ResponseEntity.badRequest().body(new APIResponse(400, "fail", "Failed to download policy document. " + errorMsg, Instant.now())));
+                                });
+                    } else {
+                        return Mono.just(ResponseEntity.badRequest().body((new APIResponse(400, "fail", "Error download policy document. Error getting api token", Instant.now()))));
+                    }
+                }).onErrorResume(error -> {
+            LOG.error(MessageFormat.format("Failed to download policy document {0}", error.getMessage()));
+            String errorMsg = APIErrorHandler.handleLifeAPIError(error.getMessage()).isEmpty() ? error.getMessage() : APIErrorHandler.handleLifeAPIError(error.getMessage());
+            return Mono.just(ResponseEntity.badRequest().body(new APIResponse(400, "fail", "Failed to download policy document. " + errorMsg, Instant.now())));
+        });
+    }
+
+    public Mono<ResponseEntity<APIResponse>> sendPol360SMSForPolicyDocLink(String clientName,String relatedId) {
+        setConfigs(pol360EndpointUrl);
+        return tokenService.getPol360APIToken().flatMap(
+                bearerToken -> {
+                    if (!bearerToken.isBlank() || !bearerToken.isEmpty()) {
+
+                        return webClient.get()
+                                .uri("/api/360API.php?Function=GetPolicyDocument&Client="+clientName+"&RelateID="+relatedId)
+                                .header(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON_VALUE)
+                                .header(HttpHeaders.ACCEPT, "*/*")
+                                .header("Authorization", bearerToken)
+                                .retrieve()
+                                .onStatus(HttpStatusCode::isError, response -> response.bodyToMono(String.class) // error body as String or other class
+                                        .flatMap(error -> {
+                                            LOG.error(error);
+                                            return Mono.error(new LifeAPIErrorException(error));
+                                        }))
+                                .toEntity(DownloadPolicyResponse.class).map(responseEntity -> {
+                                    if (responseEntity.getStatusCode().is2xxSuccessful()) {
+                                        DownloadPolicyResponse downloadPolicyResponse = responseEntity.getBody();
+                                        if (downloadPolicyResponse != null && downloadPolicyResponse.getResult() != null && !downloadPolicyResponse.getResult().toLowerCase().contains("err")) {
+                                            LOG.error(MessageFormat.format("Policy document link successfully retrieved id{0}", relatedId));
+                                            return new APIResponse(200, "success", downloadPolicyResponse.getMessage(), Instant.now());
+                                        } else {
+                                            LOG.error(MessageFormat.format("Failed to retrieve policy document link. Response status {0}", downloadPolicyResponse.getMessage()));
+                                            return new APIResponse(400, "fail", "Failed to retrieve policy document link. Response " + downloadPolicyResponse.getMessage(), Instant.now());
+                                        }
+                                    } else {
+                                        LOG.error(MessageFormat.format("Failed to retrieve policy document link. Response status {0}", responseEntity.getStatusCode().value()));
+                                        return new APIResponse(400, "fail", "Failed to retrieve policy document link. Response code " + responseEntity.getStatusCode().value(), Instant.now());
+                                    }
+                                }).onErrorResume(error -> {
+                                    LOG.error(MessageFormat.format("Failed to retrieve policy document link {0}", error.getMessage()));
+                                    String errorMsg = APIErrorHandler.handleLifeAPIError(error.getMessage()).isEmpty() ? error.getMessage() : APIErrorHandler.handleLifeAPIError(error.getMessage());
+                                    return Mono.just(new APIResponse(400, "fail", "Failed to retrieve policy document link. " + errorMsg, Instant.now()));
+                                });
+                    } else {
+                        return Mono.just(new APIResponse(400, "fail", "Error retrieving policy document link.", Instant.now()));
+                    }
+                }).flatMap(apiResponse -> {
+            if (apiResponse.getStatus() == 200) {
+                return createPol360SMSForPolicyDocLink(clientName, Long.valueOf(relatedId),apiResponse.getData().toString());
+            } else {
+                return Mono.just(ResponseEntity.badRequest().body(apiResponse));
+            }
+        });
+    }
+
+    public Mono<ResponseEntity<APIResponse>> sendESureSMSForPolicyDocLink(String clientName,String relatedId) {
+        setConfigs(pol360EndpointUrl);
+        return tokenService.getPol360APIToken().flatMap(
+                bearerToken -> {
+                    if (!bearerToken.isBlank() || !bearerToken.isEmpty()) {
+
+                        return webClient.get()
+                                .uri("/api/360API.php?Function=GetPolicyDocument&Client="+clientName+"&RelateID="+relatedId)
+                                .header(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON_VALUE)
+                                .header(HttpHeaders.ACCEPT, "*/*")
+                                .header("Authorization", bearerToken)
+                                .retrieve()
+                                .onStatus(HttpStatusCode::isError, response -> response.bodyToMono(String.class) // error body as String or other class
+                                        .flatMap(error -> {
+                                            LOG.error(error);
+                                            return Mono.error(new LifeAPIErrorException(error));
+                                        }))
+                                .toEntity(DownloadPolicyResponse.class).map(responseEntity -> {
+                                    if (responseEntity.getStatusCode().is2xxSuccessful()) {
+                                        DownloadPolicyResponse downloadPolicyResponse = responseEntity.getBody();
+                                        if (downloadPolicyResponse != null && downloadPolicyResponse.getResult() != null && !downloadPolicyResponse.getResult().toLowerCase().contains("err")) {
+                                            LOG.error(MessageFormat.format("Policy document link successfully retrieved id{0}", relatedId));
+                                            return new APIResponse(200, "success", downloadPolicyResponse.getMessage(), Instant.now());
+                                        } else {
+                                            LOG.error(MessageFormat.format("Failed to retrieve policy document link. Response status {0}", downloadPolicyResponse.getMessage()));
+                                            return new APIResponse(400, "fail", "Failed to retrieve policy document link. Response " + downloadPolicyResponse.getMessage(), Instant.now());
+                                        }
+                                    } else {
+                                        LOG.error(MessageFormat.format("Failed to retrieve policy document link. Response status {0}", responseEntity.getStatusCode().value()));
+                                        return new APIResponse(400, "fail", "Failed to retrieve policy document link. Response code " + responseEntity.getStatusCode().value(), Instant.now());
+                                    }
+                                }).onErrorResume(error -> {
+                                    LOG.error(MessageFormat.format("Failed to retrieve policy document link {0}", error.getMessage()));
+                                    String errorMsg = APIErrorHandler.handleLifeAPIError(error.getMessage()).isEmpty() ? error.getMessage() : APIErrorHandler.handleLifeAPIError(error.getMessage());
+                                    return Mono.just(new APIResponse(400, "fail", "Failed to retrieve policy document link. " + errorMsg, Instant.now()));
+                                });
+                    } else {
+                        return Mono.just(new APIResponse(400, "fail", "Error retrieving policy document link.", Instant.now()));
+                    }
+                }).flatMap(apiResponse -> {
+            if (apiResponse.getStatus() == 200) {
+                return createESureSMSForPolicyDocLink(Long.valueOf(relatedId),apiResponse.getData().toString());
+            } else {
+                return Mono.just(ResponseEntity.badRequest().body(apiResponse));
+            }
+        });
+    }
+
     public Mono<ResponseEntity<APIResponse>> addBankDetails(BankDetailsDTO bankDetailsDTO) {
         setConfigs(pol360EndpointUrl);
 
@@ -615,9 +885,8 @@ public class LifeInsuranceService {
                     return lifeInsuranceRepository.saveMemberPersonalDetails(memberDTO.getTitle(), memberDTO.getFirstName(), memberDTO.getSurname(), memberDTO.getIdNumber(), memberDTO.getGender(), AppUtil.formatDate(memberDTO.getDateOfBirth()), memberDTO.getAge(), memberDTO.getCellNumber(), memberDTO.getAltCellNumber(), memberDTO.getWorkNumber(), memberDTO.getHomeNumber(), memberDTO.getEmail(), memberDTO.getContactType()).then(Mono.just("next"))
                             .flatMap(msg -> {
                                 LOG.info(MessageFormat.format("Completed saving member personal details {0}", memberDTO.getIdNumber()));
-                                return sendEmailLifeCoverNotification(memberDTO.getIdNumber()).flatMap(res-> {
+                               // return sendEmailLifeCoverNotification(memberDTO.getIdNumber()).flatMap(res-> {
                                     return Mono.just("Personal details saved");
-                                });
                             }).onErrorResume(err -> {
                                 LOG.error(MessageFormat.format("Failed to save member personal details. Error {0}", err.getMessage()));
                                 return Mono.just("Failed to save member personal details");
@@ -933,10 +1202,137 @@ public class LifeInsuranceService {
     Mono<String> sendEmailLifeCoverNotification(String idNumber) {
         return lifeInsuranceRepository.findMemberLastRecordByIdNumber(idNumber)
                 .flatMap(member -> {
-                    return emailService.sendEmailForLifeCover(member, "New eSure Request To Create A Life Cover Account").flatMap(Mono::just);
+                    return emailService.sendEmailForFuneralCover(member, "New eSure Request To Create A Life Cover Account").flatMap(Mono::just);
                 }).onErrorResume(err -> {
                     LOG.error(MessageFormat.format("Failed to send email life cover ref {0}. Error {1}", idNumber, err.getMessage()));
                     return Mono.just("Failed to send email");
                 });
     }
+
+    Mono<ResponseEntity<APIResponse>> createESureSMSForPolicyDocLink(Long memberId,String docLink){
+        return lifeInsuranceRepository.findMemberLastRecordByMainMemberNumber(memberId).flatMap(mem-> {
+
+            SMSDTO smsDTO = new SMSDTO();
+            smsDTO.setTo(mem.getCellNumber());
+
+            String msgBody = "Hello " +
+                    mem.getFirstName() + " " + mem.getSurname()+"\n"+
+                    "Thank you for registering with eSure." +
+                    "Your Policy Number is " +mem.getPolicyNumber()+"\n"+
+                    "You can download your Policy Document on the link below." +
+                    " Use your ID number as password to open the document."+"\n"
+                    +docLink+
+                    "\n";
+            smsDTO.setBody(msgBody);
+
+            return webClient.post()
+                    .uri("/api/sms")
+                    .header(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON_VALUE)
+                    .header(HttpHeaders.ACCEPT, "*/*")
+                    .bodyValue(smsDTO)
+                    .retrieve()
+                    .toEntity(Object.class).map(responseEntity -> {
+                        if (responseEntity.getStatusCode().is2xxSuccessful()) {
+                            return ResponseEntity.ok().body(new APIResponse(200, "success", "Policy document sms successfully send", Instant.now()));
+                        } else {
+                            LOG.error("Policy document link could not be send");
+                            return ResponseEntity.ok().body(new APIResponse(400, "fail", "Policy document sms could not be send", Instant.now()));
+                        }
+                    })
+                    .timeout(Duration.ofSeconds(5))
+                    .flatMap(Mono::just)
+                    .onErrorResume(error -> {
+                        LOG.error(MessageFormat.format("Policy document sms could not be send. Error {0}", error.getMessage()));
+                        return Mono.just(ResponseEntity.badRequest().body(new APIResponse(400, "fail", "Policy document sms could not be send", Instant.now())));
+                    });
+        }).switchIfEmpty(Mono.defer(() ->{
+            LOG.error(MessageFormat.format("Member not found  {0}",memberId));
+            return Mono.just(ResponseEntity.badRequest().body(new APIResponse(400, "fail", "Member not found", Instant.now())));
+        })).onErrorResume(error -> {
+            LOG.error(MessageFormat.format("Error retrieving member. Error {0}", error.getMessage()));
+            return Mono.just(ResponseEntity.badRequest().body(new APIResponse(400, "fail", "Error retrieving member", Instant.now())));
+        });
+    }
+
+    Mono<ResponseEntity<APIResponse>> createPol360SMSForPolicyDocLink(String clientName,Long memberId,String docLink){
+        return lifeInsuranceRepository.findMemberLastRecordByMainMemberNumber(memberId).flatMap(mem-> {
+            setConfigs(pol360EndpointUrl);
+            return tokenService.getPol360APIToken().flatMap(
+                    bearerToken -> {
+                        SendPolicySMSDTO sendPolicySMSDTO = new SendPolicySMSDTO();
+                        sendPolicySMSDTO.setClient(clientName);
+                        sendPolicySMSDTO.setFunction("SendSMS");
+                        sendPolicySMSDTO.setContactNumber(mem.getCellNumber());
+                        sendPolicySMSDTO.setRelatedId(String.valueOf(memberId));
+
+                        String msgBody = "Hello " +
+                                mem.getFirstName() + " " + mem.getSurname()+"\n"+
+                                "Thank you for registering with eSure." +
+                                "Your Policy Number is " +mem.getPolicyNumber()+"\n"+
+                                "You can download your Policy Document on the link below." +
+                                " Use your ID number as password to open the document."+"\n"
+                                +docLink+
+                                "\n";
+                        sendPolicySMSDTO.setSms(msgBody);
+                        if (!bearerToken.isBlank() || !bearerToken.isEmpty()) {
+
+                            ObjectMapper objectMapper = new ObjectMapper();
+                            objectMapper.registerModule(new JavaTimeModule());
+                            String formattedReq = null;
+                            try {
+                                formattedReq = objectMapper.writeValueAsString(sendPolicySMSDTO);
+                            } catch (JsonProcessingException ex) {
+                                return Mono.just(new APIResponse(400, "Failed", "Failed to get process request", Instant.now()));
+                            }
+
+                            return webClient.post()
+                                    .uri("/api/360API.php?Function=SendSMS")
+                                    .header(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON_VALUE)
+                                    .header(HttpHeaders.ACCEPT, "*/*")
+                                    .header("Authorization", bearerToken)
+                                    .body(BodyInserters.fromObject(formattedReq))
+                                    .retrieve()
+                                    .onStatus(HttpStatusCode::isError, response -> response.bodyToMono(String.class) // error body as String or other class
+                                            .flatMap(error -> {
+                                                LOG.error(error);
+                                                return Mono.error(new LifeAPIErrorException(error));
+                                            }))
+                                    .toEntity(SendPolicySMSResponse.class).map(responseEntity -> {
+                                        if (responseEntity.getStatusCode().is2xxSuccessful()) {
+                                            SendPolicySMSResponse sendPolicySMSResponse = responseEntity.getBody();
+                                            if (sendPolicySMSResponse  != null && sendPolicySMSResponse .getResult() != null && !sendPolicySMSResponse .getResult().toLowerCase().contains("err")) {
+                                                LOG.error(MessageFormat.format("SMS successfully successfully send for related Id id{0}", sendPolicySMSDTO.getRelatedId()));
+                                                return new APIResponse(200, "success", sendPolicySMSResponse.getMessage(), Instant.now());
+                                            } else {
+                                                LOG.error(MessageFormat.format("Failed to send policy sms for member. Response status {0}", sendPolicySMSResponse.getMessage()));
+                                                return new APIResponse(400, "fail", "Failed to send policy sms for member. Response " + sendPolicySMSResponse.getMessage(), Instant.now());
+                                            }
+                                        } else {
+                                            LOG.error(MessageFormat.format("Failed to send policy sms. Response status {0}", responseEntity.getStatusCode().value()));
+                                            return new APIResponse(400, "fail", "Failed to send policy sms. Response code " + responseEntity.getStatusCode().value(), Instant.now());
+                                        }
+                                    }).onErrorResume(error -> {
+                                        LOG.error(MessageFormat.format("Failed to send policy sms {0}", error.getMessage()));
+                                        String errorMsg = APIErrorHandler.handleLifeAPIError(error.getMessage()).isEmpty() ? error.getMessage() : APIErrorHandler.handleLifeAPIError(error.getMessage());
+                                        return Mono.just(new APIResponse(400, "fail", "Failed to send policy sms. " + errorMsg, Instant.now()));
+                                    });
+                        } else {
+                            return Mono.just(new APIResponse(400, "fail", "Error sending policy sms.", Instant.now()));
+                        }
+                    }).flatMap(apiResponse -> {
+                if (apiResponse.getStatus() == 200) {
+                    return Mono.just(ResponseEntity.ok(new APIResponse(200, "success", apiResponse.getData(), Instant.now())));
+                } else {
+                    return Mono.just(ResponseEntity.badRequest().body(apiResponse));
+                }
+            });
+        }).switchIfEmpty(Mono.defer(() ->{
+            LOG.error(MessageFormat.format("Member not found  {0}",memberId));
+            return Mono.just(ResponseEntity.badRequest().body(new APIResponse(400, "fail", "Member not found", Instant.now())));
+        })).onErrorResume(error -> {
+            LOG.error(MessageFormat.format("Error retrieving member. Error {0}", error.getMessage()));
+            return Mono.just(ResponseEntity.badRequest().body(new APIResponse(400, "fail", "Error retrieving member", Instant.now())));
+        });
+    }
+
 }
