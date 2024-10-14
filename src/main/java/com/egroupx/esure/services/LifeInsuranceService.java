@@ -191,7 +191,7 @@ public class LifeInsuranceService {
 
                 return savePersonalDetails(memberDTO)
                         .flatMap(msg -> {
-                            return Mono.just(ResponseEntity.ok(new APIResponse(200, "success",msg, Instant.now())));
+                            return Mono.just(ResponseEntity.ok(new APIResponse(200, "success", msg, Instant.now())));
                         });
             } else {
                 return Mono.just(ResponseEntity.badRequest().body(cellVerRes));
@@ -495,7 +495,7 @@ public class LifeInsuranceService {
                                 .toEntity(SendPolicySMSResponse.class).map(responseEntity -> {
                                     if (responseEntity.getStatusCode().is2xxSuccessful()) {
                                         SendPolicySMSResponse sendPolicySMSResponse = responseEntity.getBody();
-                                        if (sendPolicySMSResponse  != null && sendPolicySMSResponse .getResult() != null && !sendPolicySMSResponse .getResult().toLowerCase().contains("err")) {
+                                        if (sendPolicySMSResponse != null && sendPolicySMSResponse.getResult() != null && !sendPolicySMSResponse.getResult().toLowerCase().contains("err")) {
                                             LOG.error(MessageFormat.format("SMS successfully successfully send for related Id id{0}", sendPolicySMSDTO.getRelatedId()));
                                             return new APIResponse(200, "success", sendPolicySMSResponse.getMessage(), Instant.now());
                                         } else {
@@ -516,21 +516,21 @@ public class LifeInsuranceService {
                     }
                 }).flatMap(apiResponse -> {
             if (apiResponse.getStatus() == 200) {
-                            return Mono.just(ResponseEntity.ok(new APIResponse(200, "success", apiResponse.getData(), Instant.now())));
+                return Mono.just(ResponseEntity.ok(new APIResponse(200, "success", apiResponse.getData(), Instant.now())));
             } else {
                 return Mono.just(ResponseEntity.badRequest().body(apiResponse));
             }
         });
     }
 
-    public Mono<ResponseEntity<APIResponse>> viewPolicyDocument(String clientName,String relatedId) {
+    public Mono<ResponseEntity<APIResponse>> viewPolicyDocument(String clientName, String relatedId) {
         setConfigs(pol360EndpointUrl);
         return tokenService.getPol360APIToken().flatMap(
                 bearerToken -> {
                     if (!bearerToken.isBlank() || !bearerToken.isEmpty()) {
 
                         return webClient.get()
-                                .uri("/api/360API.php?Function=GetPolicyDocument&Client="+clientName+"&RelateID="+relatedId)
+                                .uri("/api/360API.php?Function=GetPolicyDocument&Client=" + clientName + "&RelateID=" + relatedId)
                                 .header(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON_VALUE)
                                 .header(HttpHeaders.ACCEPT, "*/*")
                                 .header("Authorization", bearerToken)
@@ -564,21 +564,21 @@ public class LifeInsuranceService {
                     }
                 }).flatMap(apiResponse -> {
             if (apiResponse.getStatus() == 200) {
-                 return Mono.just(ResponseEntity.ok(new APIResponse(200,"success",apiResponse.getData(),Instant.now())));
+                return Mono.just(ResponseEntity.ok(new APIResponse(200, "success", apiResponse.getData(), Instant.now())));
             } else {
                 return Mono.just(ResponseEntity.badRequest().body(apiResponse));
             }
         });
     }
 
-    public Mono<ResponseEntity<?>> downloadPolicyDocument(String clientName,String relatedId) {
+    public Mono<ResponseEntity<?>> downloadPolicyDocument(String clientName, String relatedId) {
         setConfigs(pol360EndpointUrl);
         return tokenService.getPol360APIToken().flatMap(
                 bearerToken -> {
                     if (!bearerToken.isBlank() || !bearerToken.isEmpty()) {
 
                         return webClient.get()
-                                .uri("/api/360API.php?Function=GetPolicyDocument&Client="+clientName+"&RelateID="+relatedId)
+                                .uri("/api/360API.php?Function=GetPolicyDocument&Client=" + clientName + "&RelateID=" + relatedId)
                                 .header(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON_VALUE)
                                 .header(HttpHeaders.ACCEPT, "*/*")
                                 .header("Authorization", bearerToken)
@@ -589,19 +589,19 @@ public class LifeInsuranceService {
                                             return Mono.error(new LifeAPIErrorException(error));
                                         }))
                                 .toEntity(DownloadPolicyResponse.class).map(responseEntity -> {
-                                   if (responseEntity.getStatusCode().is2xxSuccessful()) {
+                                    if (responseEntity.getStatusCode().is2xxSuccessful()) {
                                         DownloadPolicyResponse downloadPolicyResponse = responseEntity.getBody();
                                         if (downloadPolicyResponse != null && downloadPolicyResponse.getResult() != null && !downloadPolicyResponse.getResult().toLowerCase().contains("err")) {
-                                            try{
+                                            try {
                                                 InputStream inputStream = new URL(downloadPolicyResponse.getMessage()).openStream();
                                                 byte[] fileByteArray = inputStream.readAllBytes();
 
                                                 return ResponseEntity.ok()
-                                                        .header(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=\"" + "Policy_Document_Maimember_"+relatedId+".pdf" + "\"")
+                                                        .header(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=\"" + "Policy_Document_Maimember_" + relatedId + ".pdf" + "\"")
                                                         .body(fileByteArray);
                                             } catch (IOException e) {
                                                 LOG.error(MessageFormat.format("Failed to download policy document. Response status {0}", e.getMessage()));
-                                               return ResponseEntity.badRequest().body(new APIResponse(400, "fail", "Failed to download policy document.", Instant.now()));
+                                                return ResponseEntity.badRequest().body(new APIResponse(400, "fail", "Failed to download policy document.", Instant.now()));
                                             }
                                         } else {
                                             LOG.error(MessageFormat.format("Failed to download policy document. Response status {0}", downloadPolicyResponse.getMessage()));
@@ -626,14 +626,14 @@ public class LifeInsuranceService {
         });
     }
 
-    public Mono<ResponseEntity<APIResponse>> sendPol360SMSForPolicyDocLink(String clientName,String relatedId) {
+    public Mono<ResponseEntity<APIResponse>> sendPol360SMSForPolicyDocLink(String clientName, String relatedId) {
         setConfigs(pol360EndpointUrl);
         return tokenService.getPol360APIToken().flatMap(
                 bearerToken -> {
                     if (!bearerToken.isBlank() || !bearerToken.isEmpty()) {
 
                         return webClient.get()
-                                .uri("/api/360API.php?Function=GetPolicyDocument&Client="+clientName+"&RelateID="+relatedId)
+                                .uri("/api/360API.php?Function=GetPolicyDocument&Client=" + clientName + "&RelateID=" + relatedId)
                                 .header(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON_VALUE)
                                 .header(HttpHeaders.ACCEPT, "*/*")
                                 .header("Authorization", bearerToken)
@@ -667,28 +667,46 @@ public class LifeInsuranceService {
                     }
                 }).flatMap(apiResponse -> {
             if (apiResponse.getStatus() == 200) {
-                return createPol360SMSForPolicyDocLink(clientName, Long.valueOf(relatedId),apiResponse.getData().toString());
+                return createPol360SMSForPolicyDocLink(clientName, Long.valueOf(relatedId), apiResponse.getData().toString());
             } else {
                 return Mono.just(ResponseEntity.badRequest().body(apiResponse));
             }
         });
     }
 
-    public Mono<ResponseEntity<APIResponse>> sendPol360SMSReferAFriend(String clientName,String relatedId,String[] cellNumbers) {
-        for(String cellNumber: cellNumbers){
-            createSMSReferAfriendPol360SMS(clientName, Long.valueOf(relatedId),cellNumber).subscribe();
+    public Mono<ResponseEntity<APIResponse>> sendPol360SMSReferAFriend(String clientName, String relatedId, String[] cellNumbers) {
+        if (cellNumbers.length > 0) {
+            return createSMSReferAfriendPol360SMS(clientName, Long.valueOf(relatedId), cellNumbers[0]).flatMap(msgRes1 -> {
+                if (cellNumbers.length > 1) {
+                    return createSMSReferAfriendPol360SMS(clientName, Long.valueOf(relatedId), cellNumbers[1]).flatMap(msgRes2 -> {
+                        if (cellNumbers.length > 2) {
+                           return createSMSReferAfriendPol360SMS(clientName, Long.valueOf(relatedId), cellNumbers[12]).flatMap(msgRes3 -> {
+                               return Mono.just("sms send");
+                           });
+                        } else {
+                            return Mono.just("done");
+                        }
+                    });
+                } else {
+                    return Mono.just("sms send");
+                }
+            }).flatMap(res->{
+                return Mono.just(ResponseEntity.ok().body(new APIResponse(200, "success", "SMS request has been processed", Instant.now())));
+            });
+
+        }else {
+            return Mono.just(ResponseEntity.badRequest().body(new APIResponse(400, "fail", "No cell number provided.", Instant.now())));
         }
-        return Mono.just(ResponseEntity.ok().body(new APIResponse(200,"success","Message successfully send",Instant.now())));
     }
 
-    public Mono<ResponseEntity<APIResponse>> sendESureSMSForPolicyDocLink(String clientName,String relatedId) {
+    public Mono<ResponseEntity<APIResponse>> sendESureSMSForPolicyDocLink(String clientName, String relatedId) {
         setConfigs(pol360EndpointUrl);
         return tokenService.getPol360APIToken().flatMap(
                 bearerToken -> {
                     if (!bearerToken.isBlank() || !bearerToken.isEmpty()) {
 
                         return webClient.get()
-                                .uri("/api/360API.php?Function=GetPolicyDocument&Client="+clientName+"&RelateID="+relatedId)
+                                .uri("/api/360API.php?Function=GetPolicyDocument&Client=" + clientName + "&RelateID=" + relatedId)
                                 .header(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON_VALUE)
                                 .header(HttpHeaders.ACCEPT, "*/*")
                                 .header("Authorization", bearerToken)
@@ -722,7 +740,7 @@ public class LifeInsuranceService {
                     }
                 }).flatMap(apiResponse -> {
             if (apiResponse.getStatus() == 200) {
-                return createESureSMSForPolicyDocLink(Long.valueOf(relatedId),apiResponse.getData().toString());
+                return createESureSMSForPolicyDocLink(Long.valueOf(relatedId), apiResponse.getData().toString());
             } else {
                 return Mono.just(ResponseEntity.badRequest().body(apiResponse));
             }
@@ -869,7 +887,7 @@ public class LifeInsuranceService {
 
     Mono<String> updateMember(String memberID, MemberDTO memberDTO) {
         return lifeInsuranceRepository.updateMember(memberID, memberDTO.getClient(), memberDTO.getAgentCode(), memberDTO.getPolicyNumber(), memberDTO.getBrokerCode(), memberDTO.getTitle(), memberDTO.getFirstName(), memberDTO.getSurname(), memberDTO.getIdNumber(), memberDTO.getGender(), AppUtil.formatToSQLDate(memberDTO.getDateOfBirth()), memberDTO.getAge(), memberDTO.getCellNumber(), memberDTO.getAltCellNumber(), memberDTO.getWorkNumber(), memberDTO.getHomeNumber(), memberDTO.getEmail(), memberDTO.getFax(), memberDTO.getContactType(), memberDTO.getPostalAddress1(), memberDTO.getPostalAddress2(),
-                        memberDTO.getPostalAddress3(), memberDTO.getPostalCode(), memberDTO.getResidentialAddress1(), memberDTO.getResidentialAddress2(), memberDTO.getResidentialAddress3(), memberDTO.getResidentialCode(), memberDTO.getMemberType(), memberDTO.getPremium(), memberDTO.getCover(), memberDTO.getAddPolicyID(), memberDTO.getStatusCode(),memberDTO.getResidentialCode()
+                        memberDTO.getPostalAddress3(), memberDTO.getPostalCode(), memberDTO.getResidentialAddress1(), memberDTO.getResidentialAddress2(), memberDTO.getResidentialAddress3(), memberDTO.getResidentialCode(), memberDTO.getMemberType(), memberDTO.getPremium(), memberDTO.getCover(), memberDTO.getAddPolicyID(), memberDTO.getStatusCode(), memberDTO.getResidentialCode()
                 ).then(Mono.just("next"))
                 .flatMap(msg -> {
                     LOG.info(MessageFormat.format("Completed updating member details {0}", memberDTO.getPolicyNumber()));
@@ -890,11 +908,11 @@ public class LifeInsuranceService {
                 .switchIfEmpty(Mono.defer(() -> {
                     LOG.error(MessageFormat.format("Member does not existing {0}. Saving member ", memberDTO.getIdNumber()));
 
-                    return lifeInsuranceRepository.saveMemberPersonalDetails(memberDTO.getTitle(), memberDTO.getFirstName(), memberDTO.getSurname(), memberDTO.getIdNumber(), memberDTO.getGender(), AppUtil.formatToSQLDate(memberDTO.getDateOfBirth()),memberDTO.getAge(), memberDTO.getCellNumber(), memberDTO.getAltCellNumber(), memberDTO.getWorkNumber(), memberDTO.getHomeNumber(), memberDTO.getEmail(), memberDTO.getContactType(),memberDTO.getReferralCode()).then(Mono.just("next"))
+                    return lifeInsuranceRepository.saveMemberPersonalDetails(memberDTO.getTitle(), memberDTO.getFirstName(), memberDTO.getSurname(), memberDTO.getIdNumber(), memberDTO.getGender(), AppUtil.formatToSQLDate(memberDTO.getDateOfBirth()), memberDTO.getAge(), memberDTO.getCellNumber(), memberDTO.getAltCellNumber(), memberDTO.getWorkNumber(), memberDTO.getHomeNumber(), memberDTO.getEmail(), memberDTO.getContactType(), memberDTO.getReferralCode()).then(Mono.just("next"))
                             .flatMap(msg -> {
                                 LOG.info(MessageFormat.format("Completed saving member personal details {0}", memberDTO.getIdNumber()));
-                               // return sendEmailLifeCoverNotification(memberDTO.getIdNumber()).flatMap(res-> {
-                                    return Mono.just("Personal details saved");
+                                // return sendEmailLifeCoverNotification(memberDTO.getIdNumber()).flatMap(res-> {
+                                return Mono.just("Personal details saved");
                             }).onErrorResume(err -> {
                                 LOG.error(MessageFormat.format("Failed to save member personal details. Error {0}", err.getMessage()));
                                 return Mono.just("Failed to save member personal details");
@@ -1220,21 +1238,21 @@ public class LifeInsuranceService {
                 });
     }
 
-    Mono<ResponseEntity<APIResponse>> createESureSMSForPolicyDocLink(Long memberId,String docLink){
-        return lifeInsuranceRepository.findMemberLastRecordByMainMemberNumber(memberId).flatMap(mem-> {
+    Mono<ResponseEntity<APIResponse>> createESureSMSForPolicyDocLink(Long memberId, String docLink) {
+        return lifeInsuranceRepository.findMemberLastRecordByMainMemberNumber(memberId).flatMap(mem -> {
 
             SMSDTO smsDTO = new SMSDTO();
             smsDTO.setTo(mem.getCellNumber());
 
-            String msgBody = "Dear "+mem.getFirstName()+"  \n" +
+            String msgBody = "Dear " + mem.getFirstName() + "  \n" +
                     " \n" +
-                    "Welcome to Royale Crowns Financial Services. Your policy "+mem.getPolicyNumber()+", brokered by eSure and underwritten by Royale Crowns, has been successfully registered.  \n" +
+                    "Welcome to Royale Crowns Financial Services. Your policy " + mem.getPolicyNumber() + ", brokered by eSure and underwritten by Royale Crowns, has been successfully registered.  \n" +
                     " \n" +
                     "For queries, please contact 010 006 7394. \n" +
                     "\n" +
                     "Use your ID number as the password to access your policy schedule. \n" +
                     " \n" +
-                    " Open your policy schedule \n"+docLink;
+                    " Open your policy schedule \n" + docLink;
             smsDTO.setBody(msgBody);
 
             return webClient.post()
@@ -1257,8 +1275,8 @@ public class LifeInsuranceService {
                         LOG.error(MessageFormat.format("Policy document sms could not be send. Error {0}", error.getMessage()));
                         return Mono.just(ResponseEntity.badRequest().body(new APIResponse(400, "fail", "Policy document sms could not be send", Instant.now())));
                     });
-        }).switchIfEmpty(Mono.defer(() ->{
-            LOG.error(MessageFormat.format("Member not found  {0}",memberId));
+        }).switchIfEmpty(Mono.defer(() -> {
+            LOG.error(MessageFormat.format("Member not found  {0}", memberId));
             return Mono.just(ResponseEntity.badRequest().body(new APIResponse(400, "fail", "Member not found", Instant.now())));
         })).onErrorResume(error -> {
             LOG.error(MessageFormat.format("Error retrieving member. Error {0}", error.getMessage()));
@@ -1266,8 +1284,8 @@ public class LifeInsuranceService {
         });
     }
 
-    Mono<ResponseEntity<APIResponse>> createPol360SMSForPolicyDocLink(String clientName,Long memberId,String docLink){
-        return lifeInsuranceRepository.findMemberLastRecordByMainMemberNumber(memberId).flatMap(mem-> {
+    Mono<ResponseEntity<APIResponse>> createPol360SMSForPolicyDocLink(String clientName, Long memberId, String docLink) {
+        return lifeInsuranceRepository.findMemberLastRecordByMainMemberNumber(memberId).flatMap(mem -> {
             setConfigs(pol360EndpointUrl);
             return tokenService.getPol360APIToken().flatMap(
                     bearerToken -> {
@@ -1277,15 +1295,15 @@ public class LifeInsuranceService {
                         sendPolicySMSDTO.setContactNumber(mem.getCellNumber());
                         sendPolicySMSDTO.setRelatedId(String.valueOf(memberId));
 
-                        String msgBody =  "Dear "+mem.getFirstName()+"  \n" +
+                        String msgBody = "Dear " + mem.getFirstName() + "  \n" +
                                 " \n" +
-                                "Welcome to Royale Crowns Financial Services. Your policy "+mem.getPolicyNumber()+", brokered by eSure and underwritten by Royale Crowns, has been successfully registered.  \n" +
+                                "Welcome to Royale Crowns Financial Services. Your policy " + mem.getPolicyNumber() + ", brokered by eSure and underwritten by Royale Crowns, has been successfully registered.  \n" +
                                 " \n" +
                                 "For queries, please contact 010 006 7394. \n" +
                                 "\n" +
                                 "Use your ID number as the password to access your policy schedule. \n" +
                                 " \n" +
-                                " Open your policy schedule \n"+docLink;
+                                " Open your policy schedule \n" + docLink;
 
                         sendPolicySMSDTO.setSms(msgBody);
                         if (!bearerToken.isBlank() || !bearerToken.isEmpty()) {
@@ -1314,7 +1332,7 @@ public class LifeInsuranceService {
                                     .toEntity(SendPolicySMSResponse.class).map(responseEntity -> {
                                         if (responseEntity.getStatusCode().is2xxSuccessful()) {
                                             SendPolicySMSResponse sendPolicySMSResponse = responseEntity.getBody();
-                                            if (sendPolicySMSResponse  != null && sendPolicySMSResponse .getResult() != null && !sendPolicySMSResponse .getResult().toLowerCase().contains("err")) {
+                                            if (sendPolicySMSResponse != null && sendPolicySMSResponse.getResult() != null && !sendPolicySMSResponse.getResult().toLowerCase().contains("err")) {
                                                 LOG.error(MessageFormat.format("SMS successfully successfully send for related Id id{0}", sendPolicySMSDTO.getRelatedId()));
                                                 return new APIResponse(200, "success", sendPolicySMSResponse.getMessage(), Instant.now());
                                             } else {
@@ -1340,8 +1358,8 @@ public class LifeInsuranceService {
                     return Mono.just(ResponseEntity.badRequest().body(apiResponse));
                 }
             });
-        }).switchIfEmpty(Mono.defer(() ->{
-            LOG.error(MessageFormat.format("Member not found  {0}",memberId));
+        }).switchIfEmpty(Mono.defer(() -> {
+            LOG.error(MessageFormat.format("Member not found  {0}", memberId));
             return Mono.just(ResponseEntity.badRequest().body(new APIResponse(400, "fail", "Member not found", Instant.now())));
         })).onErrorResume(error -> {
             LOG.error(MessageFormat.format("Error retrieving member. Error {0}", error.getMessage()));
@@ -1349,8 +1367,8 @@ public class LifeInsuranceService {
         });
     }
 
-    Mono<String> createSMSReferAfriendPol360SMS(String clientName,Long memberId, String cellNumber){
-        return lifeInsuranceRepository.findMemberLastRecordByMainMemberNumber(memberId).flatMap(mem-> {
+    Mono<String> createSMSReferAfriendPol360SMS(String clientName, Long memberId, String cellNumber) {
+        return lifeInsuranceRepository.findMemberLastRecordByMainMemberNumber(memberId).flatMap(mem -> {
             setConfigs(pol360EndpointUrl);
             return tokenService.getPol360APIToken().flatMap(
                     bearerToken -> {
@@ -1360,9 +1378,9 @@ public class LifeInsuranceService {
                         referFriendSMSDTO.setContactNumber(cellNumber);
                         referFriendSMSDTO.setRelatedId(String.valueOf(memberId));
 
-                        String msgBody =  "Hello\n" +
+                        String msgBody = "Hello\n" +
                                 "\n" +
-                                "You have been referred by "+mem.getFirstName() + " " +mem.getSurname()+" to take out an eSure funeral policy in just 2 minutes—simple, fast, and reliable! \n" +
+                                "You have been referred by " + mem.getFirstName() + " " + mem.getSurname() + " to take out an eSure funeral policy in just 2 minutes—simple, fast, and reliable! \n" +
                                 "\n" +
                                 "Start securing your future today by clicking here: https://onboarding.esurecover.com ";
 
@@ -1375,7 +1393,8 @@ public class LifeInsuranceService {
                             try {
                                 formattedReq = objectMapper.writeValueAsString(referFriendSMSDTO);
                             } catch (JsonProcessingException ex) {
-                                return Mono.just("Failed to send sms to "+ cellNumber);
+                                LOG.error("Failed to send sms to " + cellNumber);
+                                return Mono.just("Failed to send sms to " + cellNumber);
                             }
 
                             return webClient.post()
@@ -1393,36 +1412,36 @@ public class LifeInsuranceService {
                                     .toEntity(SendPolicySMSResponse.class).map(responseEntity -> {
                                         if (responseEntity.getStatusCode().is2xxSuccessful()) {
                                             SendPolicySMSResponse sendPolicySMSResponse = responseEntity.getBody();
-                                            if (sendPolicySMSResponse  != null && sendPolicySMSResponse .getResult() != null && !sendPolicySMSResponse .getResult().toLowerCase().contains("err")) {
+                                            if (sendPolicySMSResponse != null && sendPolicySMSResponse.getResult() != null && !sendPolicySMSResponse.getResult().toLowerCase().contains("err")) {
                                                 LOG.error(MessageFormat.format("SMS successfully successfully send for related Id id{0}", referFriendSMSDTO.getRelatedId()));
-                                                return new APIResponse(200, "success", sendPolicySMSResponse.getMessage(), Instant.now());
+                                                LOG.error("Successfully send  sms to " + cellNumber);
+                                                return Mono.just("Successfully send  sms to " + cellNumber);
                                             } else {
                                                 LOG.error(MessageFormat.format("Failed to send policy sms for member. Response status {0}", sendPolicySMSResponse.getMessage()));
-                                                return "Failed to send sms to "+ cellNumber;
+                                                return "Failed to send sms to " + cellNumber;
                                             }
                                         } else {
                                             LOG.error(MessageFormat.format("Failed to send sms to number. Response status {0}", responseEntity.getStatusCode().value()));
-                                            return "Failed to send sms to "+ cellNumber;
+                                            return "Failed to send sms to " + cellNumber;
                                         }
                                     }).onErrorResume(error -> {
                                         LOG.error(MessageFormat.format("Failed to send sms {0}", error.getMessage()));
                                         String errorMsg = APIErrorHandler.handleLifeAPIError(error.getMessage()).isEmpty() ? error.getMessage() : APIErrorHandler.handleLifeAPIError(error.getMessage());
-                                        return Mono.just("Failed to send sms to "+ cellNumber);
+                                        return Mono.just("Failed to send sms to " + cellNumber);
                                     });
                         } else {
-                            return Mono.just("Failed to send sms to "+ cellNumber);
+                            LOG.error("Failed to send sms to " + cellNumber);
+                            return Mono.just("Failed to send sms to " + cellNumber);
                         }
                     }).flatMap(apiResponse -> {
-                return Mono.just("Failed to send sms to "+ cellNumber);
+                return Mono.just("Failed to send sms to " + cellNumber);
             });
-        }).switchIfEmpty(Mono.defer(() ->{
-            LOG.error(MessageFormat.format("Member not found  {0}",memberId));
-            return Mono.just("Member not found "+memberId);
+        }).switchIfEmpty(Mono.defer(() -> {
+            LOG.error(MessageFormat.format("Member not found  {0}", memberId));
+            return Mono.just("Member not found " + memberId);
         })).onErrorResume(error -> {
             LOG.error(MessageFormat.format("Error retrieving member. Error {0}", error.getMessage()));
-            return Mono.just("Error retrieving member. Error "+error.getMessage());
+            return Mono.just("Error retrieving member. Error " + error.getMessage());
         });
     }
-
-
 }
