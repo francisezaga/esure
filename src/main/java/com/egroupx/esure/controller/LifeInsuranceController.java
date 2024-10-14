@@ -74,6 +74,11 @@ public class LifeInsuranceController {
         return lifeInsuranceService.sendPol360SMSForPolicyDocLink(clientName,relatedId);
     }
 
+    @PostMapping(value = {"/sendPol360SMSReferAFriend/{clientName}/{relatedId}"})
+    public Mono<ResponseEntity<APIResponse>> sendPol360SMSReferAFriend(@PathVariable String clientName,@PathVariable String relatedId,@RequestBody String[] cellNumbers)  {
+        return lifeInsuranceService.sendPol360SMSReferAFriend(clientName,relatedId,cellNumbers);
+    }
+
     @PostMapping(value = {"/sendESureSMSPolicyDocLink/{clientName}/{relatedId}"})
     public Mono<ResponseEntity<APIResponse>> sendESureSMSPolicyDocLink(@PathVariable String clientName,@PathVariable String relatedId)  {
         return lifeInsuranceService.sendESureSMSForPolicyDocLink(clientName,relatedId);

@@ -674,6 +674,13 @@ public class LifeInsuranceService {
         });
     }
 
+    public Mono<ResponseEntity<APIResponse>> sendPol360SMSReferAFriend(String clientName,String relatedId,String[] cellNumbers) {
+        for(String cellNumber: cellNumbers){
+            createSMSReferAfriendPol360SMS(clientName, Long.valueOf(relatedId),cellNumber).subscribe();
+        }
+        return Mono.just(ResponseEntity.ok().body(new APIResponse(200,"success","Message successfully send",Instant.now())));
+    }
+
     public Mono<ResponseEntity<APIResponse>> sendESureSMSForPolicyDocLink(String clientName,String relatedId) {
         setConfigs(pol360EndpointUrl);
         return tokenService.getPol360APIToken().flatMap(
@@ -849,7 +856,7 @@ public class LifeInsuranceService {
 
     Mono<String> saveMember(String memberID, MemberDTO memberDTO) {
         return lifeInsuranceRepository.saveMember(memberID, memberDTO.getClient(), memberDTO.getAgentCode(), memberDTO.getPolicyNumber(), memberDTO.getBrokerCode(), memberDTO.getTitle(), memberDTO.getFirstName(), memberDTO.getSurname(), memberDTO.getIdNumber(), memberDTO.getGender(), AppUtil.formatToSQLDate(memberDTO.getDateOfBirth()), memberDTO.getAge(), memberDTO.getCellNumber(), memberDTO.getAltCellNumber(), memberDTO.getWorkNumber(), memberDTO.getHomeNumber(), memberDTO.getEmail(), memberDTO.getFax(), memberDTO.getContactType(), memberDTO.getPostalAddress1(), memberDTO.getPostalAddress2(),
-                        memberDTO.getPostalAddress3(), memberDTO.getPostalCode(), memberDTO.getResidentialAddress1(), memberDTO.getResidentialAddress2(), memberDTO.getResidentialAddress3(), memberDTO.getResidentialCode(), memberDTO.getMemberType(), memberDTO.getPremium(), memberDTO.getCover(), memberDTO.getAddPolicyID(), memberDTO.getStatusCode(), memberDTO.getEgroupxAgentId()
+                        memberDTO.getPostalAddress3(), memberDTO.getPostalCode(), memberDTO.getResidentialAddress1(), memberDTO.getResidentialAddress2(), memberDTO.getResidentialAddress3(), memberDTO.getResidentialCode(), memberDTO.getMemberType(), memberDTO.getPremium(), memberDTO.getCover(), memberDTO.getAddPolicyID(), memberDTO.getStatusCode(), memberDTO.getReferralCode()
                 ).then(Mono.just("next"))
                 .flatMap(msg -> {
                     LOG.info(MessageFormat.format("Completed saving member details {0}", memberDTO.getPolicyNumber()));
@@ -862,7 +869,7 @@ public class LifeInsuranceService {
 
     Mono<String> updateMember(String memberID, MemberDTO memberDTO) {
         return lifeInsuranceRepository.updateMember(memberID, memberDTO.getClient(), memberDTO.getAgentCode(), memberDTO.getPolicyNumber(), memberDTO.getBrokerCode(), memberDTO.getTitle(), memberDTO.getFirstName(), memberDTO.getSurname(), memberDTO.getIdNumber(), memberDTO.getGender(), AppUtil.formatToSQLDate(memberDTO.getDateOfBirth()), memberDTO.getAge(), memberDTO.getCellNumber(), memberDTO.getAltCellNumber(), memberDTO.getWorkNumber(), memberDTO.getHomeNumber(), memberDTO.getEmail(), memberDTO.getFax(), memberDTO.getContactType(), memberDTO.getPostalAddress1(), memberDTO.getPostalAddress2(),
-                        memberDTO.getPostalAddress3(), memberDTO.getPostalCode(), memberDTO.getResidentialAddress1(), memberDTO.getResidentialAddress2(), memberDTO.getResidentialAddress3(), memberDTO.getResidentialCode(), memberDTO.getMemberType(), memberDTO.getPremium(), memberDTO.getCover(), memberDTO.getAddPolicyID(), memberDTO.getStatusCode(),memberDTO.getEgroupxAgentId()
+                        memberDTO.getPostalAddress3(), memberDTO.getPostalCode(), memberDTO.getResidentialAddress1(), memberDTO.getResidentialAddress2(), memberDTO.getResidentialAddress3(), memberDTO.getResidentialCode(), memberDTO.getMemberType(), memberDTO.getPremium(), memberDTO.getCover(), memberDTO.getAddPolicyID(), memberDTO.getStatusCode(),memberDTO.getResidentialCode()
                 ).then(Mono.just("next"))
                 .flatMap(msg -> {
                     LOG.info(MessageFormat.format("Completed updating member details {0}", memberDTO.getPolicyNumber()));
@@ -882,7 +889,8 @@ public class LifeInsuranceService {
                 })
                 .switchIfEmpty(Mono.defer(() -> {
                     LOG.error(MessageFormat.format("Member does not existing {0}. Saving member ", memberDTO.getIdNumber()));
-                    return lifeInsuranceRepository.saveMemberPersonalDetails(memberDTO.getTitle(), memberDTO.getFirstName(), memberDTO.getSurname(), memberDTO.getIdNumber(), memberDTO.getGender(), AppUtil.formatToSQLDate(memberDTO.getDateOfBirth()), memberDTO.getAge(), memberDTO.getCellNumber(), memberDTO.getAltCellNumber(), memberDTO.getWorkNumber(), memberDTO.getHomeNumber(), memberDTO.getEmail(), memberDTO.getContactType()).then(Mono.just("next"))
+
+                    return lifeInsuranceRepository.saveMemberPersonalDetails(memberDTO.getTitle(), memberDTO.getFirstName(), memberDTO.getSurname(), memberDTO.getIdNumber(), memberDTO.getGender(), AppUtil.formatToSQLDate(memberDTO.getDateOfBirth()),memberDTO.getAge(), memberDTO.getCellNumber(), memberDTO.getAltCellNumber(), memberDTO.getWorkNumber(), memberDTO.getHomeNumber(), memberDTO.getEmail(), memberDTO.getContactType(),memberDTO.getReferralCode()).then(Mono.just("next"))
                             .flatMap(msg -> {
                                 LOG.info(MessageFormat.format("Completed saving member personal details {0}", memberDTO.getIdNumber()));
                                // return sendEmailLifeCoverNotification(memberDTO.getIdNumber()).flatMap(res-> {
@@ -899,6 +907,7 @@ public class LifeInsuranceService {
     }
 
     Mono<ResponseEntity<APIResponse>> saveSpouse(SpouseDTO spouseDTO) {
+        spouseDTO.setIdNumber(spouseDTO.getIdNumber().concat(spouseDTO.getMainMemberID()));
         return lifeInsuranceRepository.saveSpouse(spouseDTO.getClient(), spouseDTO.getTitle(), spouseDTO.getFirstName(), spouseDTO.getSurname(), spouseDTO.getIdNumber(), spouseDTO.getGender(), AppUtil.formatToSQLDate(spouseDTO.getDateOfBirth()), spouseDTO.getAge(), spouseDTO.getMainMemberID(), spouseDTO.getPolicyNumber())
                 .then(Mono.just("next"))
                 .flatMap(msg -> {
@@ -912,6 +921,7 @@ public class LifeInsuranceService {
     }
 
     Mono<ResponseEntity<APIResponse>> saveExtendedDependent(ExtendedMemberDTO extendedMemberDto) {
+        extendedMemberDto.setIdNumber(extendedMemberDto.getIdNumber().concat(extendedMemberDto.getMainMemberID()));
         return lifeInsuranceRepository.saveExtendedDependent(extendedMemberDto.getClient(), extendedMemberDto.getTitle(), extendedMemberDto.getFirstName(), extendedMemberDto.getSurname(), extendedMemberDto.getIdNumber(), extendedMemberDto.getGender(), AppUtil.formatToSQLDate(extendedMemberDto.getDateOfBirth()), extendedMemberDto.getAge(), extendedMemberDto.getMainMemberID(), extendedMemberDto.getPolicyNumber(), extendedMemberDto.getRelation())
                 .then(Mono.just("next"))
                 .flatMap(msg -> {
@@ -924,6 +934,7 @@ public class LifeInsuranceService {
     }
 
     Mono<ResponseEntity<APIResponse>> saveDependent(DependentDTO dependentDTO) {
+        dependentDTO.setIdNumber(dependentDTO.getIdNumber().concat(dependentDTO.getMainMemberID()));
         return lifeInsuranceRepository.saveDependent(dependentDTO.getClient(), dependentDTO.getTitle(), dependentDTO.getFirstName(), dependentDTO.getSurname(), dependentDTO.getIdNumber(), dependentDTO.getGender(), AppUtil.formatToSQLDate(dependentDTO.getDateOfBirth()), dependentDTO.getAge(), dependentDTO.getMainMemberID(), dependentDTO.getPolicyNumber())
                 .then(Mono.just("next"))
                 .flatMap(msg -> {
@@ -1215,14 +1226,15 @@ public class LifeInsuranceService {
             SMSDTO smsDTO = new SMSDTO();
             smsDTO.setTo(mem.getCellNumber());
 
-            String msgBody = "Hello " +
-                    mem.getFirstName() + " " + mem.getSurname()+"\n"+
-                    "Thank you for registering with eSure." +
-                    "Your Policy Number is " +mem.getPolicyNumber()+"\n"+
-                    "You can download your Policy Document on the link below." +
-                    " Use your ID number as password to open the document."+"\n"
-                    +docLink+
-                    "\n";
+            String msgBody = "Dear "+mem.getFirstName()+"  \n" +
+                    " \n" +
+                    "Welcome to Royale Crowns Financial Services. Your policy "+mem.getPolicyNumber()+", brokered by eSure and underwritten by Royale Crowns, has been successfully registered.  \n" +
+                    " \n" +
+                    "For queries, please contact 010 006 7394. \n" +
+                    "\n" +
+                    "Use your ID number as the password to access your policy schedule. \n" +
+                    " \n" +
+                    " Open your policy schedule \n"+docLink;
             smsDTO.setBody(msgBody);
 
             return webClient.post()
@@ -1265,14 +1277,16 @@ public class LifeInsuranceService {
                         sendPolicySMSDTO.setContactNumber(mem.getCellNumber());
                         sendPolicySMSDTO.setRelatedId(String.valueOf(memberId));
 
-                        String msgBody = "Hello " +
-                                mem.getFirstName() + " " + mem.getSurname()+"\n"+
-                                "Thank you for registering with eSure." +
-                                "Your Policy Number is " +mem.getPolicyNumber()+"\n"+
-                                "You can download your Policy Document on the link below." +
-                                " Use your ID number as password to open the document."+"\n"
-                                +docLink+
-                                "\n";
+                        String msgBody =  "Dear "+mem.getFirstName()+"  \n" +
+                                " \n" +
+                                "Welcome to Royale Crowns Financial Services. Your policy "+mem.getPolicyNumber()+", brokered by eSure and underwritten by Royale Crowns, has been successfully registered.  \n" +
+                                " \n" +
+                                "For queries, please contact 010 006 7394. \n" +
+                                "\n" +
+                                "Use your ID number as the password to access your policy schedule. \n" +
+                                " \n" +
+                                " Open your policy schedule \n"+docLink;
+
                         sendPolicySMSDTO.setSms(msgBody);
                         if (!bearerToken.isBlank() || !bearerToken.isEmpty()) {
 
@@ -1334,5 +1348,81 @@ public class LifeInsuranceService {
             return Mono.just(ResponseEntity.badRequest().body(new APIResponse(400, "fail", "Error retrieving member", Instant.now())));
         });
     }
+
+    Mono<String> createSMSReferAfriendPol360SMS(String clientName,Long memberId, String cellNumber){
+        return lifeInsuranceRepository.findMemberLastRecordByMainMemberNumber(memberId).flatMap(mem-> {
+            setConfigs(pol360EndpointUrl);
+            return tokenService.getPol360APIToken().flatMap(
+                    bearerToken -> {
+                        SendReferAfriendSMSDTO referFriendSMSDTO = new SendReferAfriendSMSDTO();
+                        referFriendSMSDTO.setClient(clientName);
+                        referFriendSMSDTO.setFunction("SendSMS");
+                        referFriendSMSDTO.setContactNumber(cellNumber);
+                        referFriendSMSDTO.setRelatedId(String.valueOf(memberId));
+
+                        String msgBody =  "Hello\n" +
+                                "\n" +
+                                "You have been referred by "+mem.getFirstName() + " " +mem.getSurname()+" to take out an eSure funeral policy in just 2 minutes—simple, fast, and reliable! \n" +
+                                "\n" +
+                                "Start securing your future today by clicking here: https://onboarding.esurecover.com ";
+
+                        referFriendSMSDTO.setSms(msgBody);
+                        if (!bearerToken.isBlank() || !bearerToken.isEmpty()) {
+
+                            ObjectMapper objectMapper = new ObjectMapper();
+                            objectMapper.registerModule(new JavaTimeModule());
+                            String formattedReq = null;
+                            try {
+                                formattedReq = objectMapper.writeValueAsString(referFriendSMSDTO);
+                            } catch (JsonProcessingException ex) {
+                                return Mono.just("Failed to send sms to "+ cellNumber);
+                            }
+
+                            return webClient.post()
+                                    .uri("/api/360API.php?Function=SendSMS")
+                                    .header(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON_VALUE)
+                                    .header(HttpHeaders.ACCEPT, "*/*")
+                                    .header("Authorization", bearerToken)
+                                    .body(BodyInserters.fromObject(formattedReq))
+                                    .retrieve()
+                                    .onStatus(HttpStatusCode::isError, response -> response.bodyToMono(String.class) // error body as String or other class
+                                            .flatMap(error -> {
+                                                LOG.error(error);
+                                                return Mono.error(new LifeAPIErrorException(error));
+                                            }))
+                                    .toEntity(SendPolicySMSResponse.class).map(responseEntity -> {
+                                        if (responseEntity.getStatusCode().is2xxSuccessful()) {
+                                            SendPolicySMSResponse sendPolicySMSResponse = responseEntity.getBody();
+                                            if (sendPolicySMSResponse  != null && sendPolicySMSResponse .getResult() != null && !sendPolicySMSResponse .getResult().toLowerCase().contains("err")) {
+                                                LOG.error(MessageFormat.format("SMS successfully successfully send for related Id id{0}", referFriendSMSDTO.getRelatedId()));
+                                                return new APIResponse(200, "success", sendPolicySMSResponse.getMessage(), Instant.now());
+                                            } else {
+                                                LOG.error(MessageFormat.format("Failed to send policy sms for member. Response status {0}", sendPolicySMSResponse.getMessage()));
+                                                return "Failed to send sms to "+ cellNumber;
+                                            }
+                                        } else {
+                                            LOG.error(MessageFormat.format("Failed to send sms to number. Response status {0}", responseEntity.getStatusCode().value()));
+                                            return "Failed to send sms to "+ cellNumber;
+                                        }
+                                    }).onErrorResume(error -> {
+                                        LOG.error(MessageFormat.format("Failed to send sms {0}", error.getMessage()));
+                                        String errorMsg = APIErrorHandler.handleLifeAPIError(error.getMessage()).isEmpty() ? error.getMessage() : APIErrorHandler.handleLifeAPIError(error.getMessage());
+                                        return Mono.just("Failed to send sms to "+ cellNumber);
+                                    });
+                        } else {
+                            return Mono.just("Failed to send sms to "+ cellNumber);
+                        }
+                    }).flatMap(apiResponse -> {
+                return Mono.just("Failed to send sms to "+ cellNumber);
+            });
+        }).switchIfEmpty(Mono.defer(() ->{
+            LOG.error(MessageFormat.format("Member not found  {0}",memberId));
+            return Mono.just("Member not found "+memberId);
+        })).onErrorResume(error -> {
+            LOG.error(MessageFormat.format("Error retrieving member. Error {0}", error.getMessage()));
+            return Mono.just("Error retrieving member. Error "+error.getMessage());
+        });
+    }
+
 
 }
