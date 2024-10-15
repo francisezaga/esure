@@ -10,8 +10,6 @@ import org.springframework.http.codec.multipart.FilePart;
 import org.springframework.web.bind.annotation.*;
 import reactor.core.publisher.Mono;
 
-import java.util.UUID;
-
 @RestController
 @RequestMapping(path = "/esure/life")
 public class LifeInsuranceController {
@@ -82,6 +80,26 @@ public class LifeInsuranceController {
     @PostMapping(value = {"/sendESureSMSPolicyDocLink/{clientName}/{relatedId}"})
     public Mono<ResponseEntity<APIResponse>> sendESureSMSPolicyDocLink(@PathVariable String clientName,@PathVariable String relatedId)  {
         return lifeInsuranceService.sendESureSMSForPolicyDocLink(clientName,relatedId);
+    }
+
+    @GetMapping(value = {"/getPayAt/{clientName}/{policyNumber}"})
+    public Mono<ResponseEntity<APIResponse>> getPayAt(@PathVariable String clientName,@PathVariable String policyNumber)  {
+        return lifeInsuranceService.getPayAt(clientName,policyNumber);
+    }
+
+    @GetMapping(value = {"/getSanctionScreening/{name}"})
+    public Mono<ResponseEntity<APIResponse>> getSanctionScreening(@PathVariable String name)  {
+        return lifeInsuranceService.getSanctionScreening(name);
+    }
+
+    @PostMapping(value = {"/saveKYCMemberReport/{memberId}"})
+    public Mono<ResponseEntity<APIResponse>> saveKYCMemberReport(@PathVariable String memberId)  {
+        return lifeInsuranceService.saveKYCMemberReport(memberId);
+    }
+
+    @GetMapping(value = {"/getKYCMemberReport/{memberId}"})
+    public Mono<ResponseEntity<APIResponse>> getKYCMemberReport(@PathVariable String memberId)  {
+        return lifeInsuranceService.getMemberKYCDetails(memberId);
     }
 
     @PostMapping(value = {"/addBankDetails"})

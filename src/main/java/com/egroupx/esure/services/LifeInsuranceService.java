@@ -1,24 +1,24 @@
 package com.egroupx.esure.services;
 
 import com.egroupx.esure.dto.auth.SMSDTO;
+import com.egroupx.esure.dto.kyc.NameScanDTO;
 import com.egroupx.esure.dto.life.*;
 import com.egroupx.esure.dto.v360.ProductDTO;
 import com.egroupx.esure.enums.DOCType;
 import com.egroupx.esure.exceptions.APIErrorHandler;
 import com.egroupx.esure.exceptions.LifeAPIErrorException;
 import com.egroupx.esure.model.Suburb;
+import com.egroupx.esure.model.life.KYCReportModel;
 import com.egroupx.esure.model.life.Member;
 import com.egroupx.esure.model.responses.api.APIResponse;
 
-import com.egroupx.esure.model.responses.life.DownloadPolicyResponse;
-import com.egroupx.esure.model.responses.life.LifeAPIResponse;
-import com.egroupx.esure.model.responses.life.ProductsResponse;
-import com.egroupx.esure.model.responses.life.SendPolicySMSResponse;
+import com.egroupx.esure.model.responses.life.*;
 import com.egroupx.esure.repository.LifeInsuranceRepository;
 import com.egroupx.esure.util.AppUtil;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
+import com.google.protobuf.Message;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
@@ -27,6 +27,7 @@ import org.springframework.http.*;
 import org.springframework.http.client.MultipartBodyBuilder;
 import org.springframework.http.codec.multipart.FilePart;
 import org.springframework.stereotype.Service;
+import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.reactive.function.BodyInserters;
 import org.springframework.web.reactive.function.client.WebClient;
 import reactor.core.publisher.Flux;
@@ -73,13 +74,16 @@ public class LifeInsuranceService {
 
     private final EmailService emailService;
 
+    private final KYCVerificationService kycVerificationService;
+
     private final Logger LOG = LoggerFactory.getLogger(LifeInsuranceService.class);
 
-    public LifeInsuranceService(TokenService tokenService, LifeInsuranceRepository lifeInsuranceRepository, AuthService authService, EmailService emailService) {
+    public LifeInsuranceService(TokenService tokenService, LifeInsuranceRepository lifeInsuranceRepository, AuthService authService, EmailService emailService, KYCVerificationService kycVerificationService) {
         this.tokenService = tokenService;
         this.lifeInsuranceRepository = lifeInsuranceRepository;
         this.authService = authService;
         this.emailService = emailService;
+        this.kycVerificationService = kycVerificationService;
     }
 
     private void setConfigs(String endpointUrl) {
@@ -747,6 +751,137 @@ public class LifeInsuranceService {
         });
     }
 
+    public Mono<ResponseEntity<APIResponse>> getSanctionScreening(String name) {
+        setConfigs(pol360EndpointUrl);
+        return tokenService.getPol360APIToken().flatMap(
+                bearerToken -> {
+                    if (!bearerToken.isBlank() || !bearerToken.isEmpty()) {
+
+                        return webClient.get()
+                                .uri("/api/360API.php?Function=SanctionScreening&Name="+name)
+                                .header(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON_VALUE)
+                                .header(HttpHeaders.ACCEPT, "*/*")
+                                .header("Authorization", bearerToken)
+                                .retrieve()
+                                .onStatus(HttpStatusCode::isError, response -> response.bodyToMono(String.class) // error body as String or other class
+                                        .flatMap(error -> {
+                                            LOG.error(error);
+                                            return Mono.error(new LifeAPIErrorException(error));
+                                        }))
+                                .toEntity(Object.class).map(responseEntity -> {
+                                    Object resObj = responseEntity.getBody();
+                                  if (responseEntity.getStatusCode().is2xxSuccessful()) {
+                                      LOG.info(MessageFormat.format("Successfully retrieved sanction screening for member {0}",name));
+                                      return new APIResponse(200,"success",resObj,Instant.now());
+                                    } else {
+                                        LOG.error(MessageFormat.format("Failed to retrieve sanction screening. Response status {0}", responseEntity.getStatusCode().value()));
+                                        return new APIResponse(400, "fail", "Failed to retrieve sanction screening. Response code " + responseEntity.getStatusCode().value(), Instant.now());
+                                    }
+
+                                }).onErrorResume(error -> {
+                                    LOG.error(MessageFormat.format("Failed to retrieve sanction screening {0}", error.getMessage()));
+                                    String errorMsg = APIErrorHandler.handleLifeAPIError(error.getMessage()).isEmpty() ? error.getMessage() : APIErrorHandler.handleLifeAPIError(error.getMessage());
+                                    return Mono.just(new APIResponse(400, "fail", "Failed to retrieve sanction screening. " + errorMsg, Instant.now()));
+                                });
+                    } else {
+                        return Mono.just(new APIResponse(400, "fail", "Failed to retrieve sanction screening.", Instant.now()));
+                    }
+                }).flatMap(apiResponse -> {
+            if (apiResponse.getStatus() == 200) {
+                return Mono.just(ResponseEntity.ok().body(apiResponse));
+            } else {
+                return Mono.just(ResponseEntity.badRequest().body(apiResponse));
+            }
+        });
+    }
+
+    public Mono<ResponseEntity<APIResponse>> saveKYCMemberReport(String memberId){
+
+        return lifeInsuranceRepository.findMemberLastRecordByMainMemberNumber(Long.valueOf(memberId))
+                .flatMap(mem-> {
+            NameScanDTO nameScanDTO = new NameScanDTO();
+            nameScanDTO.setFirstName(mem.getFirstName());
+            nameScanDTO.setLastName(mem.getSurname());
+            return kycVerificationService.nameScanReport(nameScanDTO)
+                    .flatMap(apiResponse ->
+                    {
+                        if (apiResponse.getStatus() == 200) {
+                            return saveMemberKYCDetails(memberId,mem.getPolicyNumber(),apiResponse.getData().toString()).flatMap(
+                                    apiRes->{
+                                        if(apiRes.getStatus()==200){
+                                            return Mono.just(ResponseEntity.ok().body(apiRes));
+                                        }else{
+                                            return Mono.just(ResponseEntity.badRequest().body(apiRes));
+                                        }
+                                    }
+
+                            ).onErrorResume(er->{
+                                return Mono.just(ResponseEntity.badRequest().body(new APIResponse()));
+                            });
+
+                        } else {
+                            LOG.error("Couldn't get sanction screening report");
+                            return Mono.just(ResponseEntity.badRequest().body(new APIResponse(400, "fail", "Couldn't get sanction screening report", Instant.now())));
+                        }
+                    });
+        }).switchIfEmpty(Mono.defer(() -> {
+                    LOG.error(MessageFormat.format("User {0} not found ", memberId));
+                    return Mono.just(ResponseEntity.badRequest().body(new APIResponse(400, "success", "Couldn't find main member "+ memberId, Instant.now())));
+                }))
+                .onErrorResume(error->{
+            return Mono.just(ResponseEntity.badRequest().body(new APIResponse(400, "success", "Couldn't find main member "+ memberId, Instant.now())));
+        });
+    }
+
+    public Mono<ResponseEntity<APIResponse>> getPayAt(String clientName, String policyNumber) {
+        setConfigs(pol360EndpointUrl);
+        return tokenService.getPol360APIToken().flatMap(
+                bearerToken -> {
+                    if (!bearerToken.isBlank() || !bearerToken.isEmpty()) {
+
+                        return webClient.get()
+                                .uri("api/360API.php?Function=GetPayAt&PolicyNumber="+policyNumber+"&Client="+clientName)
+                                .header(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON_VALUE)
+                                .header(HttpHeaders.ACCEPT, "*/*")
+                                .header("Authorization", bearerToken)
+                                .retrieve()
+                                .onStatus(HttpStatusCode::isError, response -> response.bodyToMono(String.class) // error body as String or other class
+                                        .flatMap(error -> {
+                                            LOG.error(error);
+                                            return Mono.error(new LifeAPIErrorException(error));
+                                        }))
+                                .toEntity(PayAtResponse.class).map(responseEntity -> {
+                                    Object resObj = responseEntity.getBody();
+                                    if (responseEntity.getStatusCode().is2xxSuccessful()) {
+                                        PayAtResponse payAtResponse = responseEntity.getBody();
+                                        if (payAtResponse != null && payAtResponse.getResult() != null && !payAtResponse.getResult().toLowerCase().contains("err")) {
+                                            LOG.error(MessageFormat.format("Success retrieved pay@ details id{0}", policyNumber));
+                                            return new APIResponse(200, "success", payAtResponse, Instant.now());
+                                        } else {
+                                            LOG.error(MessageFormat.format("Failed to retrieve Pay@ details. Response status {0}", payAtResponse.getMessage()));
+                                            return new APIResponse(400, "fail", "Failed to retrieve Pay@ details. Response " + payAtResponse, Instant.now());
+                                        }
+                                    } else {
+                                        LOG.error(MessageFormat.format("Failed to retrieve policy document link. Response status {0}", responseEntity.getStatusCode().value()));
+                                        return new APIResponse(400, "fail", "Failed to retrieve policy document link. Response code " + responseEntity.getStatusCode().value(), Instant.now());
+                                    }
+                                }).onErrorResume(error -> {
+                                    LOG.error(MessageFormat.format("Failed to retrieve policy document link {0}", error.getMessage()));
+                                    String errorMsg = APIErrorHandler.handleLifeAPIError(error.getMessage()).isEmpty() ? error.getMessage() : APIErrorHandler.handleLifeAPIError(error.getMessage());
+                                    return Mono.just(new APIResponse(400, "fail", "Failed to retrieve policy document link. " + errorMsg, Instant.now()));
+                                });
+                    } else {
+                        return Mono.just(new APIResponse(400, "fail", "Failed to retrieve policy document link.", Instant.now()));
+                    }
+                }).flatMap(apiResponse -> {
+            if (apiResponse.getStatus() == 200) {
+                return Mono.just(ResponseEntity.ok().body(apiResponse));
+            } else {
+                return Mono.just(ResponseEntity.badRequest().body(apiResponse));
+            }
+        });
+    }
+
     public Mono<ResponseEntity<APIResponse>> addBankDetails(BankDetailsDTO bankDetailsDTO) {
         setConfigs(pol360EndpointUrl);
 
@@ -911,7 +1046,6 @@ public class LifeInsuranceService {
                     return lifeInsuranceRepository.saveMemberPersonalDetails(memberDTO.getTitle(), memberDTO.getFirstName(), memberDTO.getSurname(), memberDTO.getIdNumber(), memberDTO.getGender(), AppUtil.formatToSQLDate(memberDTO.getDateOfBirth()), memberDTO.getAge(), memberDTO.getCellNumber(), memberDTO.getAltCellNumber(), memberDTO.getWorkNumber(), memberDTO.getHomeNumber(), memberDTO.getEmail(), memberDTO.getContactType(), memberDTO.getReferralCode()).then(Mono.just("next"))
                             .flatMap(msg -> {
                                 LOG.info(MessageFormat.format("Completed saving member personal details {0}", memberDTO.getIdNumber()));
-                                // return sendEmailLifeCoverNotification(memberDTO.getIdNumber()).flatMap(res-> {
                                 return Mono.just("Personal details saved");
                             }).onErrorResume(err -> {
                                 LOG.error(MessageFormat.format("Failed to save member personal details. Error {0}", err.getMessage()));
@@ -922,6 +1056,39 @@ public class LifeInsuranceService {
                     LOG.error(MessageFormat.format("Failed to saving member details. Error {0}", err.getMessage()));
                     return Mono.just("Failed to saving member details");
                 });
+    }
+
+    public Mono<APIResponse> saveMemberKYCDetails(String mainMemberId,String policyNumber, String kycReport) {
+        return lifeInsuranceRepository.saveKYCReport(mainMemberId, policyNumber, kycReport).then(Mono.just("next"))
+                .flatMap(msg -> {
+            LOG.info(MessageFormat.format("Completed saving member kyc report {0}", mainMemberId));
+            return Mono.just(new APIResponse(200, "success", "Kyc report successfully saved", Instant.now()));
+        }).onErrorResume(err -> {
+            LOG.error(MessageFormat.format("Failed to save member kyc report Error {0}", err.getMessage()));
+            return Mono.just(new APIResponse(400, "fail", "Kyc report failed to save", Instant.now()));
+        });
+    }
+
+    public Mono<ResponseEntity<APIResponse>> getMemberKYCDetails(String policyNumber) {
+        return lifeInsuranceRepository.getKYCReportByPolicyNumber(policyNumber).flatMap(report -> {
+            LOG.info(MessageFormat.format("Successfully retrieved kyc report {0}", policyNumber));
+                    ObjectMapper mapper = new ObjectMapper();
+                    Object obj = null;
+                    try {
+                        obj = mapper.readValue(report.getKycReport(), Object.class);
+                    } catch (JsonProcessingException e) {
+                       LOG.error("Error processing object "+ e.getMessage());
+                    }
+                    return Mono.just(ResponseEntity.ok().body(new APIResponse(200, "success", obj, Instant.now())));
+        }).
+        switchIfEmpty(Mono.defer(() -> {
+            LOG.error(MessageFormat.format("Failed to retrieve kyc report Error {0} records found",0));
+            return Mono.just(ResponseEntity.ok().body(new APIResponse(400, "fail", "Kyc report failed to retrieve", Instant.now())));
+
+        })).onErrorResume(err -> {
+            LOG.error(MessageFormat.format("Failed to retrieve kyc report Error {0}", err.getMessage()));
+            return Mono.just(ResponseEntity.ok().body(new APIResponse(400, "fail", "Kyc report failed to retrieve", Instant.now())));
+        });
     }
 
     Mono<ResponseEntity<APIResponse>> saveSpouse(SpouseDTO spouseDTO) {

@@ -92,6 +92,31 @@ public class KYCVerificationService {
                 });
     }
 
+
+    public Mono<APIResponse> nameScanReport(NameScanDTO nameScanReq) {
+        setConfigs(nameSpaceScanUrl);
+        return webClientPost.post()
+                .uri("/person-scans/emerald")
+                .header(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON_VALUE)
+                .header(HttpHeaders.ACCEPT, "*/*")
+                .header("api-key", nameSpaceKey)
+                .bodyValue(nameScanReq)
+                .retrieve()
+                .toEntity(String.class).map(responseEntity -> {
+                    if (responseEntity.getStatusCode().is2xxSuccessful()) {
+                        return new APIResponse(200, "success", responseEntity.getBody(), Instant.now());
+                    } else {
+                        LOG.error(MessageFormat.format("User {0} {1} could not be verified {2}", nameScanReq.getFirstName(), nameScanReq.getLastName(), responseEntity.getStatusCode()));
+                        return new APIResponse(500, "fail", "User " + nameScanReq.getFirstName() + " " + nameScanReq.getLastName() + " could not be found " + responseEntity.getStatusCode(), Instant.now());
+                    }
+                }).onErrorResume(error -> {
+                    LOG.info(MessageFormat.format("Unexpected error. Personal details could not be found on namespace scan {0}", error.getMessage()));
+                    return Mono.just(new APIResponse(500, "fail", "Unexpected error. Personal details could not be found on namespace scan ", Instant.now()));
+                });
+    }
+
+
+
     public Mono<APIResponse> rSAIDCheckVerification(RSAIDcheckDTO rsaCitiReq) {
         setConfigs(citizenUrl);
 

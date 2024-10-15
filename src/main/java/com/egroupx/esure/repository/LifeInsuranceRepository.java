@@ -2,6 +2,7 @@ package com.egroupx.esure.repository;
 
 import com.egroupx.esure.dto.life.*;
 import com.egroupx.esure.model.life.*;
+import com.egroupx.esure.model.responses.life.KYCReportResponse;
 import org.springframework.data.r2dbc.repository.Query;
 import org.springframework.data.repository.reactive.ReactiveCrudRepository;
 import org.springframework.stereotype.Repository;
@@ -75,5 +76,11 @@ public interface LifeInsuranceRepository extends ReactiveCrudRepository<MemberDT
 
     @Query("SELECT * FROM esure_bank_details WHERE id_number=:idNumber")
     Flux<BankDetails> findBankDetailsByMainMemberIdNumber(String idNumber);
+
+    @Query("INSERT IGNORE INTO esure_funeral_policy_member_kyc_report SET pol_360_main_member_id=:pol360RefId, policy_number=:policyNumber, kyc_report=:kycReport ON DUPLICATE KEY UPDATE kyc_report=:kycReport")
+    Mono<KYCReportModel> saveKYCReport(String pol360RefId,String policyNumber,String kycReport);
+
+    @Query("SELECT * FROM esure_funeral_policy_member_kyc_report WHERE policy_number=:policyNumber")
+    Mono<KYCReportResponse> getKYCReportByPolicyNumber(String policyNumber);
 
 }
