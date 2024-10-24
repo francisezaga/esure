@@ -48,8 +48,8 @@ public class AuthService {
         final String otpCode = generateOTPCode();
         String message = " \n" +
                 "Hello, \n" +
-                "Thank you for your interest in eSure.\n"+
-                "Your OTP is "+otpCode+". Please enter it on the website now";
+                "Thank you for your interest in eSure Cover\n"+
+                "Your OTP is "+otpCode+". Please enter it on the website now to complete your verification.";
         return retrieveOTPDetailsAndSendOTPSms(cellNumber,message).flatMap(apiRes->{
             if(apiRes.getStatus()==200){
                 return saveOTPDetails(cellNumber.trim(),LocalDateTime.now(),"",otpCode.trim())

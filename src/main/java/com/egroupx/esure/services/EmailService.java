@@ -169,7 +169,7 @@ public class EmailService {
                     "<body style=\"margin:30px;box-shadow: 1px 1px 1px 3px #9B9EA8;\">\n" +
                     "    <div class=\"email-container\">\n" +
                     "        <div class=\"header\">\n" +
-                    "    <p>Dear eSure Support Team,</p>\n" +
+                    "    <p>Dear eSure Cover Support Team,</p>\n" +
                     "   </div>\n" +
                     "        <div class=\"content\">\n" +
                     "           <div class=\"intro\">"+
@@ -189,7 +189,7 @@ public class EmailService {
                     "    <p>Kindly reach out to the customer directly to assist with their query or concern. Please ensure a prompt response to ensure their needs are met. Thank you for your support and attention to this matter.</p>\n" +
                     "    </div>\n"+
                     "            <div class=\"best-regards\">Best regards,</div>\n" +
-                    "            <div class=\"esure-team\">eSure Team</div>\n" +
+                    "            <div class=\"esure-team\">The eSure Cover Team</div>\n" +
                     "            <div class=\"esure-moto\">Insuring Your Tomorrow, Today</div>\n" +
                     "            <img src=\""+esureEmailLogo+"\"/>"+
                     "            <div class=\"footer\">\n" +
@@ -352,16 +352,15 @@ public class EmailService {
                     "    <p>We appreciate your trust in us and look forward to helping you protect what matters most.</p>\n" +
                     "     </div>\n" +
                     "        <p class=\"best-regards\">Best regards,</p>\n" +
-                    "        <p class=\"esure-team\">eSure Team</p>\n" +
+                    "        <p class=\"esure-team\">The eSure Cover Team</p>\n" +
                     "        <p class=\"esure-moto\">Insuring Your Tomorrow, Today</p>\n" +
                     "            <img src=\""+esureEmailLogo+"\"/>"+
                     "        <div class=\"footer\">\n" +
                     "          <p>\n" +
                     "            <i>\n" +
-                    "              eSure is a Juristic Representative of Royale Crowns Financial\n" +
-                    "              Services, an authorized Financial Services Provider (FSP No.:\n" +
-                    "              52845). All insurance products and services are offered under the\n" +
-                    "              regulatory framework of Royale Crowns Financial Services.</i>\n" +
+                    "               eSure Cover is a Juristic Representative of Royale Crowns Financial Services," +
+                    "                an authorised Financial Services Provider (FSP No.: 52845)." +
+                    "                All insurance products and services are offered under the regulatory framework of Royale Crowns Financial Services."+
                     "          </p>\n" +
                     "        </div>\n" +
                     "      </div>\n" +
@@ -646,7 +645,7 @@ public class EmailService {
                     "        </div>\n" +
                     "        <div class=\"content\">\n" +
                     "           <div class=\"welcome\"\n>"+
-                    "            <p>We have received a new Medical Aid lead from eSure. Please find the customer's details below:</p>\n" +
+                    "            <p>We have received a new Medical Aid lead from eSure Cover. Please find the customer's details below:</p>\n" +
                     "           </div>\n" +
                     "            <p><strong>Name:</strong></p>\n" +
                     "            <div class=\"highlight\">"+fullName+"</div>\n" +
@@ -675,11 +674,11 @@ public class EmailService {
                     "            <p>Please reach out to assist the customer with their Medical Aid needs.</p>\n" +
                     "            </div>" +
                     "            <p class=\"best-regards\">Best regards,</p>\n" +
-                    "            <p class=\"esure-team\">eSure Team</p>\n" +
+                    "            <p class=\"esure-team\">eSure Cover Team</p>\n" +
                     "            <p class=\"esure-moto\">Insuring Your Tomorrow, Today</p>\n" +
                     "            <img src=\""+esureEmailLogo+"\"/>"+
                     "            <div class=\"footer\">\n" +
-                    "                <p><i>eSure is a Juristic Representative of Royale Crowns Financial Services, an authorized Financial Services Provider (FSP No.: 52845). All insurance products and services are offered under the regulatory framework of Royale Crowns Financial Services.</i></p>\n" +
+                    "                <p><i>eSure Cover is a Juristic Representative of Royale Crowns Financial Services, an authorised Financial Services Provider (FSP No.: 52845). All insurance products and services are offered under the regulatory framework of Royale Crowns Financial Services.</i></p>\n" +
                     "            </div>\n" +
                     "        </div>\n" +
                     "    </div>\n" +
@@ -813,10 +812,10 @@ public class EmailService {
                     "  \n" +
                     "        <div class=\"content\">\n" +
                     "           <div class=\"welcome\">"+
-                    "  <p><strong>Welcome to eSure Medical Aid!</strong></p>\n" +
+                    "  <p><strong>Welcome to eSure Cover Medical Aid!</strong></p>\n" +
                     "   </div>"+
                     "  \n" +
-                    "  <p>Thank you for submitting your request with eSure. One of our dedicated agents will be in touch shortly to complete your application.</p>\n" +
+                    "  <p>Thank you for submitting your request with eSure Cover. One of our dedicated agents will be in touch shortly to complete your application.</p>\n" +
                     "  <div class=\"reach-out\">\n" +
                     "  <p>For immediate assistance, feel free to reach out to our support team:</p>\n" +
                     "  </div>\n" +
@@ -829,14 +828,14 @@ public class EmailService {
                     "        <p><strong>WhatsApp:</strong></p>\n" +
                     "        <div class=\"highlight\">068 148 8912</div>\n" +
                     "        <p class=\"best-regards\">Best regards,</p>\n" +
-                    "        <p class=\"esure-team\">eSure Team</p>\n" +
+                    "        <p class=\"esure-team\">The eSure Cover Team</p>\n" +
                     "        <p class=\"esure-moto\">Insuring Your Tomorrow, Today</p>\n" +
                     "            <img src=\""+esureEmailLogo+"\"/>"+
                     "        <div class=\"footer\">\n" +
                     "          <p>\n" +
                     "            <i>\n" +
-                    "              eSure is a Juristic Representative of Royale Crowns Financial\n" +
-                    "              Services, an authorized Financial Services Provider (FSP No.:\n" +
+                    "              eSure Cover is a Juristic Representative of Royale Crowns Financial\n" +
+                    "              Services, an authorised Financial Services Provider (FSP No.:\n" +
                     "              52845). All insurance products and services are offered under the\n" +
                     "              regulatory framework of Royale Crowns Financial Services.</i>\n" +
                     "          </p>\n" +

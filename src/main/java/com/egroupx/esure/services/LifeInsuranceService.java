@@ -1413,7 +1413,7 @@ public class LifeInsuranceService {
 
             String msgBody = "Dear " + mem.getFirstName() + "  \n" +
                     " \n" +
-                    "Welcome to Royale Crowns Financial Services. Your policy " + mem.getPolicyNumber() + ", brokered by eSure and underwritten by Royale Crowns, has been successfully registered.  \n" +
+                    "Welcome to Royale Crowns Financial Services. Your policy " + mem.getPolicyNumber() + ", brokered by eSure Cover and underwritten by Royale Crowns, has been successfully registered.  \n" +
                     " \n" +
                     "For queries, please contact 010 006 7394. \n" +
                     "\n" +
@@ -1464,7 +1464,7 @@ public class LifeInsuranceService {
 
                         String msgBody = "Dear " + mem.getFirstName() + "  \n" +
                                 " \n" +
-                                "Welcome to Royale Crowns Financial Services. Your policy " + mem.getPolicyNumber() + ", brokered by eSure and underwritten by Royale Crowns, has been successfully registered.  \n" +
+                                "Welcome to Royale Crowns Financial Services. Your policy " + mem.getPolicyNumber() + ", brokered by eSure Cover and underwritten by Royale Crowns, has been successfully registered.  \n" +
                                 " \n" +
                                 "For queries, please contact 010 006 7394. \n" +
                                 "\n" +

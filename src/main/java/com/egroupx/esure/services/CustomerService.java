@@ -312,7 +312,7 @@ public class CustomerService {
     Mono<String> sendEmailFSPCustomerWelcomeNotification(Long fspQuoteId) {
         return customerRepository.getCustomerEmailDetailsByQuoteRef(fspQuoteId)
                 .flatMap(customer -> {
-                    return emailService.sendFSPInsuranceWelcomeEmail(customer,"Welcome to eSure Insurance – We're Excited to Have You!").flatMap(Mono::just);
+                    return emailService.sendFSPInsuranceWelcomeEmail(customer,"Welcome to eSure Cover Insurance – We're Excited to Have You!").flatMap(Mono::just);
                 }).onErrorResume(err -> {
                     LOG.error(MessageFormat.format("Failed to send email quote ref {0}. Error {1}",fspQuoteId, err.getMessage()));
                     return Mono.just("Failed to send email");
