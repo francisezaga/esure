@@ -193,7 +193,7 @@ public class EmailService {
                     "            <div class=\"esure-moto\">Insuring Your Tomorrow, Today</div>\n" +
                     "            <img src=\""+esureEmailLogo+"\"/>"+
                     "            <div class=\"footer\">\n" +
-                    "                <p><i>eSure is a Juristic Representative of Royale Crowns Financial Services, an authorized Financial Services Provider (FSP No.: 52845). All insurance products and services are offered under the regulatory framework of Royale Crowns Financial Services.</i></p>\n" +
+                    "                <p><i>eSure Cover is a Juristic Representative of Royale Crowns Financial Services, an authorized Financial Services Provider (FSP No.: 52845). All insurance products and services are offered under the regulatory framework of Royale Crowns Financial Services.</i></p>\n" +
                     "            </div>\n" +
                     "        </div>\n" +
                     "    </div>\n" +

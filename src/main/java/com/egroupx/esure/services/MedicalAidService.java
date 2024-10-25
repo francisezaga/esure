@@ -66,9 +66,11 @@ public class MedicalAidService {
         return medicalAidRepository.findMedicalAidRecordByEmailAddress(email)
                 .flatMap(member -> {
                     return emailService.sendQuotationEmailForMedicalAid(member, "New Medical Aid Lead from eSure Cover", "Pfister & Associates Team",pfisterEmailAddress)
-                            .flatMap(Mono::just).then(Mono.just("Send email to esure call center"))
+                            .then(Mono.just("Send email to esure call center"))
                             .flatMap(esure -> emailService.sendQuotationEmailForMedicalAid(member, "New Medical Aid Lead from eSure Cover", "eSure Cover Medical Aid Support",esureEmailAddress))
-                            .then(Mono.just("Send welcome email to customer")).flatMap(welcome -> emailService.sendWelcomeEmailForMedicalAid(member, "Welcome to eSure Cover Medical Aid! - We're Excited to Have You").flatMap(Mono::just));
+                            .then(Mono.just("Send welcome email to customer"))
+                            .flatMap(welcome -> emailService.sendWelcomeEmailForMedicalAid(member, "Welcome to eSure Cover Medical Aid! - We're Excited to Have You")
+                                    .then(Mono.just("next")).flatMap(Mono::just));
                 }).onErrorResume(err -> {
                     LOG.error(MessageFormat.format("Failed to send email for medical aid ref {0}. Error {1}", email, err.getMessage()));
                     return Mono.just("Failed to send email");
