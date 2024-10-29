@@ -96,7 +96,7 @@ public class LifeInsuranceService {
 
     public Mono<ResponseEntity<APIResponse>> createMember(MemberDTO memberDTO) {
         setConfigs(pol360EndpointUrl);
-
+        memberDTO.setStatusCode("NEW");
         lifeInsuranceRepository.getLatestPolicyNumber().flatMap(polId -> {
             String policyId = generatePolicyId(polId);
             memberDTO.setPolicyNumber(String.valueOf(policyId));
@@ -144,7 +144,8 @@ public class LifeInsuranceService {
                                                 LifeAPIResponse lifeAPIResponse = responseEntity.getBody();
                                                 if (lifeAPIResponse != null && lifeAPIResponse.getResult() != null && !lifeAPIResponse.getResult().toLowerCase().contains("err")) {
                                                     String memberId = lifeAPIResponse != null ? String.valueOf(lifeAPIResponse.getMemberID()) : "";
-                                                    LOG.error(MessageFormat.format("Member successfully created member with id{0}", memberId));
+                                                    String policyNumber = lifeAPIResponse != null ? String.valueOf(lifeAPIResponse.getPolicyNumber()) : memberDTO.getPolicyNumber();
+                                                    LOG.error(MessageFormat.format("Member successfully created member with id{0} and policy number {1}", memberId,policyNumber));
                                                     return new APIResponse(200, "success", lifeAPIResponse, Instant.now());
                                                 } else {
                                                     LOG.error(MessageFormat.format("Failed to create member. Response status {0}", lifeAPIResponse.getMessage()));
@@ -169,6 +170,7 @@ public class LifeInsuranceService {
                         if (lifeAPIResponse != null && lifeAPIResponse.getMemberID() != null) {
                             try {
                                 memberID = String.valueOf(lifeAPIResponse.getMemberID());
+                                memberDTO.setPolicyNumber(lifeAPIResponse.getPolicyNumber());
                             } catch (Exception ex) {
 
                             }
@@ -1411,15 +1413,11 @@ public class LifeInsuranceService {
             SMSDTO smsDTO = new SMSDTO();
             smsDTO.setTo(mem.getCellNumber());
 
-            String msgBody = "Dear " + mem.getFirstName() + "  \n" +
-                    " \n" +
-                    "Welcome to Royale Crowns Financial Services. Your policy " + mem.getPolicyNumber() + ", brokered by eSure Cover and underwritten by Royale Crowns, has been successfully registered.  \n" +
-                    " \n" +
-                    "For queries, please contact 010 006 7394. \n" +
-                    "\n" +
-                    "Use your ID number as the password to access your policy schedule. \n" +
-                    " \n" +
-                    " Open your policy schedule \n" + docLink;
+            String msgBody = "Dear " + mem.getFirstName() + "\n" +
+                    "Welcome to eSure Cover! Your policy with Royale Crowns Financial Services underwritten by Safrican, is now active. Use your ID number as the password to access your policy schedule here:\n" +
+                    docLink+
+                    "\nAccess the Member Portal for future payments:\n https://tinyurl.com/2ax962z7a\n" +
+                    "For queries, please contact 010 006 7394.";
             smsDTO.setBody(msgBody);
 
             return webClient.post()
@@ -1462,15 +1460,11 @@ public class LifeInsuranceService {
                         sendPolicySMSDTO.setContactNumber(mem.getCellNumber());
                         sendPolicySMSDTO.setRelatedId(String.valueOf(memberId));
 
-                        String msgBody = "Dear " + mem.getFirstName() + "  \n" +
-                                " \n" +
-                                "Welcome to Royale Crowns Financial Services. Your policy " + mem.getPolicyNumber() + ", brokered by eSure Cover and underwritten by Royale Crowns, has been successfully registered.  \n" +
-                                " \n" +
-                                "For queries, please contact 010 006 7394. \n" +
-                                "\n" +
-                                "Use your ID number as the password to access your policy schedule. \n" +
-                                " \n" +
-                                " Open your policy schedule \n" + docLink;
+                        String msgBody = "Dear " + mem.getFirstName() + "\n" +
+                                "Welcome to eSure Cover! Your policy with Royale Crowns Financial Services underwritten by Safrican, is now active. Use your ID number as the password to access your policy schedule here:\n" +
+                                docLink+
+                                "\nAccess the Member Portal for future payments:\n https://tinyurl.com/2ax962z7a\n" +
+                                "For queries, please contact 010 006 7394.";
 
                         sendPolicySMSDTO.setSms(msgBody);
                         if (!bearerToken.isBlank() || !bearerToken.isEmpty()) {
