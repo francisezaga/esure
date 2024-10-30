@@ -62,7 +62,7 @@ public class AuthService {
                         });
             }
             else{
-                if(cellNumber.trim().contains("27800000000")){//for testing without otp
+                if(cellNumber.trim().equalsIgnoreCase("27800000000")){//for testing without otp
                     return saveOTPDetails(cellNumber.trim(),LocalDateTime.now(),"",otpCode.trim())
                             .flatMap(apiResponse -> {
                                 if(apiResponse.getStatus()==200){
