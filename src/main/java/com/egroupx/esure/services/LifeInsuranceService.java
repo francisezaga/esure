@@ -100,6 +100,8 @@ public class LifeInsuranceService {
         lifeInsuranceRepository.getLatestPolicyNumber().flatMap(polId -> {
             String policyId = generatePolicyId(polId);
             memberDTO.setPolicyNumber(String.valueOf(policyId));
+            memberDTO.setBrokerCode("KGA001");
+            memberDTO.setAgentCode("WEBSITE");
             return Mono.just(polId);
         }).switchIfEmpty(Mono.defer(() -> {
             String policyId = generatePolicyId("");
@@ -123,6 +125,8 @@ public class LifeInsuranceService {
                                 String formattedReq = null;
                                 try {
                                     formattedReq = objectMapper.writeValueAsString(memberDTO);
+                                    LOG.info("========Formatted Req======");
+                                    LOG.info(formattedReq);
                                 } catch (JsonProcessingException ex) {
                                     return Mono.just(new APIResponse(400, "Failed", "Failed to get process request", Instant.now()));
                                 }

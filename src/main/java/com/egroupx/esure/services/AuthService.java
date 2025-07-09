@@ -1,6 +1,7 @@
 package com.egroupx.esure.services;
 
 import com.egroupx.esure.dto.auth.SMSDTO;
+import com.egroupx.esure.model.auth.OTP;
 import com.egroupx.esure.model.responses.api.APIResponse;
 import com.egroupx.esure.repository.AuthRepository;
 import org.slf4j.Logger;
@@ -26,6 +27,9 @@ public class AuthService {
     @Value("${egroupx.services.otpSMS.endpoint}")
     private String urlSMSEndpoint;
 
+    @Value("${egroupx.services.otpSMS.apiKey}")
+    private String smsApiKey;
+
     private WebClient webClient;
 
     private final Logger LOG = LoggerFactory.getLogger(AuthService.class);
@@ -43,6 +47,13 @@ public class AuthService {
                         "Content-Type", MediaType.APPLICATION_JSON_VALUE
                 ).build();
     }
+
+    public Mono<ResponseEntity<APIResponse>> saveRecord(OTP otp){
+        APIResponse apiResponse = new APIResponse();
+        Mono<OTP> otpRes =  authRepository.save(otp);
+        return Mono.just(ResponseEntity.ok().body(new APIResponse(200,"",otpRes,Instant.now())));
+    }
+
 
    public Mono<ResponseEntity<APIResponse>> verifyUserCellNumber(String cellNumber){
         final String otpCode = generateOTPCode();
@@ -220,6 +231,9 @@ public class AuthService {
                 .uri("/api/sms")
                 .header(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON_VALUE)
                 .header(HttpHeaders.ACCEPT, "*/*")
+             .header("Content-Type", "application/json")
+             .header("Accept", "*/*")
+             .header("enl-sms-api-key",smsApiKey)
                 .bodyValue(smsDTO)
                 .retrieve()
                 .toEntity(Object.class).map(responseEntity->{

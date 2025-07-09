@@ -77,7 +77,8 @@ egroupx:
       url: https://citizenapi.securecitizen.cloud/Citizen
 
     otpSMS:
-      endpoint: http://102.131.60.77:8088
+      endpoint: https://backoffice.payflo.co.za
+      apiKey: MpqPmOStn1VBGIsJI3nPX25NbOXAad03f7L1jeD
 
   email:
     host: mail.esurecover.co.za

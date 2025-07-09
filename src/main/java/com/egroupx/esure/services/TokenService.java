@@ -66,6 +66,7 @@ public class TokenService {
                     if (responseEntity.getStatusCode().is2xxSuccessful()) {
                         TokenResponse tokenRes = responseEntity.getBody();
                         if(tokenRes!=null && tokenRes.getJwtToken()!=null) {
+                            LOG.info(tokenRes.getJwtToken());
                             return tokenRes.getJwtToken();
                         }else{
                             return "";
